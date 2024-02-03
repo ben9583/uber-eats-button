@@ -82,6 +82,21 @@ const orderHandler = async (req, res) => {
   responses.set(token.jti, response);
 }
 
+/**
+ * Gets the response for a given order ID previously created by calling PUT to /order.
+ * @param {express.Request} req The express request object
+ * @param {express.Response} res The express response object
+ */
+const orderGetter = (req, res) => {
+  const id = req.query.id;
+  const response = responses.get(id);
+  if(!response) {
+    res.status(404).send('Not Found');
+    return;
+  }
+  res.status(200).send(response)
+}
+
 const app = express();
 let server;
 
@@ -96,6 +111,7 @@ const startServer = () => {
   });
   app.put('/order-dry-run', orderDryRunHandler);
   app.put('/order', orderHandler);
+  app.get('/order', orderGetter);
 
   server = app.listen(3000, () => {
     console.log('Server is running on port 3000');
