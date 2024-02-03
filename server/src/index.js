@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const uber_eats_puppeteer = require('./puppeteer');
 
 if(process.env.NODE_ENV !== 'production') {
   require('dotenv').config({ path: '../.env'});
@@ -29,27 +30,31 @@ app.get('/', (_, res) => {
   res.send('Hello World');
 })
 
-app.put('/order', (req, res) => {
+app.put('/order', async (req, res) => {
   const authorization = req.headers.authorization;
   if(!authorization) {
     console.debug('No authorization header');
-    return res.status(401).send('Unauthorized');
+    res.status(401).send('Unauthorized');
+    return;
   }
 
   const tokens = authorization.split(' ');
   if(tokens.length !== 2 || tokens[0] !== 'Bearer') {
     console.debug('Invalid authorization header');
-    return res.status(401).send('Unauthorized');
+    res.status(401).send('Unauthorized');
+    return;
   }
 
   const jwt_token = tokens[1];
   try { jwtGuard() } catch (error) {
     console.debug('Invalid token');
-    return res.status(401).send('Unauthorized');
+    res.status(401).send('Unauthorized');
+    return;
   }
 
   const token = jwt.decode(jwt_token);
-  
+  const response = await uber_eats_puppeteer.createUberEatsOrder(token);
+  res.status(response.code).send(response.body);
 })
 
 app.listen(3000, () => {
