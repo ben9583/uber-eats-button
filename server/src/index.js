@@ -15,8 +15,11 @@ const idempotentKeys = new Set();
 
 const jwtGuard = (jwt_token) => {
   const token = jwt.verify(jwt_token, process.env.SECRET_KEY);
-  if(token.aud !== process.env.JWT_AUDIENCE || token.iss !== process.env.JWT_ISSUER || token.sub !== process.env.JWT_SUBJECT) {
+  if(token.aud !== process.env.JWT_AUDIENCE || token.iss !== process.env.JWT_ISSUER || token.sub !== process.env.JWT_SUBJECT || !token.jti) {
     throw new Error('Invalid token');
+  }
+  if(token.iat > Date.now() || token.exp < Date.now()) {
+    throw new Error('Token expired');
   }
   if(idempotentKeys.has(token.jti)) {
     throw new Error('Idempotent key already used');
