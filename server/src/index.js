@@ -11,7 +11,7 @@ if(process.env.SECRET_KEY === undefined) {
 
 const app = express();
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.send('Hello World');
 })
 
