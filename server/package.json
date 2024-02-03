@@ -11,7 +11,8 @@
   "author": "Ben Plate",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "puppeteer": "^21.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"
