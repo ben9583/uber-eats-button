@@ -1,0 +1,19 @@
+{
+  "name": "uber-eats-server",
+  "version": "1.0.0",
+  "description": "Server package that automatically places a random Uber Eats order",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ben Plate",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}
