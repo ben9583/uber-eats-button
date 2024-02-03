@@ -1,7 +1,7 @@
 const express = require('express');
 
 if(process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
+  require('dotenv').config({ path: '../.env'});
 }
 
 if(process.env.SECRET_KEY === undefined) {
