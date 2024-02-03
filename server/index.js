@@ -1,5 +1,14 @@
 const express = require('express');
 
+if(process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
+if(process.env.SECRET_KEY === undefined) {
+  console.error('Environment variable SECRET_KEY is not defined! Exiting...');
+  process.exit(1);
+}
+
 const app = express();
 
 app.get('/', (req, res) => {
