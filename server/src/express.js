@@ -46,7 +46,7 @@ const authorizationCheck = (req, res) => {
 
   const jwt_token = tokens[1];
   try { jwtGuard(jwt_token) } catch (error) {
-    console.debug('Invalid token');
+    console.debug(error.message);
     res.status(401).send('Unauthorized');
     return undefined;
   }
