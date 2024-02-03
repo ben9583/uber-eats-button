@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const uber_eats_puppeteer = require('./puppeteer');
 
+const responses = new Map();
 const idempotentKeys = new Set();
 
 /**
@@ -75,8 +76,10 @@ const orderHandler = async (req, res) => {
   const token = authorizationCheck(req, res);
   if(!token) return;
 
+  responses.set(token.jti, {code: 102, body: 'Processing'});
+  res.status(202).send('Accepted');
   const response = await uber_eats_puppeteer.createUberEatsOrder(token);
-  res.status(response.code).send(response.body);
+  responses.set(token.jti, response);
 }
 
 const app = express();
