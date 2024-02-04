@@ -123,6 +123,7 @@ const stopServer = () => {
   if(!server) return;
 
   server.close();
+  server.unref();
   server = undefined;
 }
 
