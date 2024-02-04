@@ -12,51 +12,48 @@ const createUberEatsOrder = async () => {
   console.debug("[B] 2FA page created")
 
   const mailPromise = new Promise(async res => {
-    await page2fa.goto('https://mail.ben9583.com/');
+    await page2fa.goto('https://mail.ben9583.com/', { waitUntil: 'networkidle2' });
     console.debug("[B] Navigated to mail login page")
-    await page2fa.waitForSelector('input#rcmloginuser');
-    console.debug("[B] Found email input")
-    await page2fa.type('input#rcmloginuser', process.env.TWOFACTOR_EMAIL);
-    console.debug("[B] Typed email")
-    await page2fa.waitForSelector('input#rcmloginpwd');
-    console.debug("[B] Found password input")
-    await page2fa.type('input#rcmloginpwd', process.env.TWOFACTOR_PASSWORD);
-    console.debug("[B] Typed password")
+    await page2fa.waitForSelector('input#rcmloginuser').then(elem => elem.type(process.env.TWOFACTOR_EMAIL));
+    console.debug("[B] Typed email input")
+    await page2fa.waitForSelector('input#rcmloginpwd').then(elem => elem.type(process.env.TWOFACTOR_PASSWORD));
+    console.debug("[B] Typed password input")
     await page2fa.click('button#rcmloginsubmit');
     console.debug("[B] Clicked login button")
     await page2fa.screenshot({ path: 'out2.png' });
     res();
   })
 
-  await page.goto('https://www.ubereats.com/');
+  await page.goto('https://www.ubereats.com/', { waitUntil: 'networkidle2' });
   console.debug("[A] Navigated to Uber Eats page")
-  await page.waitForSelector('a[data-test="header-sign-in"]');
-  console.debug("[A] Found sign in button")
-  await page.screenshot({ path: 'out.png' });
-  await page.click('a[data-test="header-sign-in"]');
+  await page.waitForSelector('a[data-test="header-sign-in"]')
+            .then(elem => new Promise(res => setTimeout(() => res(elem), 1000)))
+            .then(elem => new Promise(res => page.screenshot({ path: 'out.png' }).then(() => res(elem))))
+            .then(elem => elem.click())
+            .then(() => page.waitForNavigation({ waitUntil: 'networkidle2' }));
   console.debug("[A] Clicked sign in button")
-  await page.waitForSelector('input#PHONE_NUMBER_or_EMAIL_ADDRESS');
-  console.debug("[A] Found email input")
-  await page.type('input#PHONE_NUMBER_or_EMAIL_ADDRESS', process.env.UBER_EATS_EMAIL);
+  await page.waitForSelector('input#PHONE_NUMBER_or_EMAIL_ADDRESS').then(elem => elem.type(process.env.UBER_EATS_EMAIL));
   console.debug("[A] Typed email")
-  await page.waitForSelector('button#forward-button');
-  await page.click('button#forward-button');
+  await page.waitForSelector('button#forward-button')
+            .then(elem => new Promise(res => setTimeout(() => res(elem), 1000)))
+            .then(elem => new Promise(res => page.screenshot({ path: 'out.png' }).then(() => res(elem))))
+            .then(elem => elem.click());
   console.debug("[A] Clicked next button")
   await page.screenshot({ path: 'out.png' });
 
   await mailPromise;
   console.debug("[B] Logged in to mail")
   await new Promise(res => setTimeout(res, 6000));
-  await page2fa.reload();
+  await page2fa.reload({ waitUntil: 'networkidle2' });
   console.debug("[B] Reloaded mail");
-  await page2fa.waitForSelector('span[title="admin@uber.com"]');
-  console.debug("[B] Found email");
-  await page2fa.screenshot({ path: 'out2.png' });
-  await page2fa.click('span[title="admin@uber.com"]');
+  await page2fa.waitForSelector('span[title="admin@uber.com"]')
+               .then(elem => new Promise(res => setTimeout(() => res(elem), 2000)))
+               .then(elem => new Promise(res => page2fa.screenshot({ path: 'out2.png' }).then(() => res(elem))))
+               .then(elem => elem.click());
   console.debug("[B] Clicked email");
   await new Promise(res => setTimeout(res, 4000));
   await page2fa.screenshot({ path: 'out2.png' });
-  const iframeElem = await page2fa.waitForSelector('iframe#messagecontframe');
+  const frame = await page2fa.waitForSelector('iframe#messagecontframe').then(elem => elem.contentFrame());
   console.debug("[B] Found iframe")
   const frame = await iframeElem.contentFrame();
   const codeElem = await frame.waitForSelector('td.v1p2b');
@@ -83,9 +80,7 @@ const createUberEatsOrder = async () => {
   await page.screenshot({ path: 'out3.png' });
   console.debug("[A] Clicked menu button");
   */
-  await page.waitForSelector('input#location-typeahead-home-input');
-  console.debug("[A] Found location input");
-  await page.type('input#location-typeahead-home-input', process.env.UBER_EATS_ADDRESS);
+  await page.waitForSelector('input#location-typeahead-home-input').then(elem => elem.type(process.env.UBER_EATS_ADDRESS));
   console.debug("[A] Typed location");
   await page.waitForSelector('button[class="du d3 d0 ds cc dv dw al c3 dp af dx dy dz e0 e1 e2 e3 e4 dm e5"]');
   console.debug("[A] Found search button");
