@@ -61,7 +61,7 @@ test('risk distribution array sums to 1', () => {
   expect(Math.abs(distribution5.reduce((a, b) => a + b, 0) - 1) < epsilon).toBe(true);
 });
 
-test('risk distribution follows expected distribution', () => {
+test('risk distribution follows known examples', () => {
   const actual1 = risk_distribution(2, 5);
   const expected1 = [0.924141819979, 0.075858180021];
   for(let i = 0; i < 2; i++) {
