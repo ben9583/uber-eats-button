@@ -1,4 +1,6 @@
 const puppeteer = require('puppeteer');
+const { weighted_random } = require('./utils');
+
 const randomCategories = [
   { name: 'Pizza', weight: 100 },
   { name: 'Sushi', weight: 40 },
