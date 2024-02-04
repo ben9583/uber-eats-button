@@ -1,4 +1,24 @@
 const puppeteer = require('puppeteer');
+const randomCategories = [
+  { name: 'Pizza', weight: 100 },
+  { name: 'Sushi', weight: 40 },
+  { name: 'Chinese', weight: 60 },
+  { name: 'Sandwich', weight: 60 },
+  { name: 'Soup', weight: 40 },
+  { name: 'Mexican', weight: 100 },
+  { name: 'Thai', weight: 50 },
+  { name: 'Korean', weight: 40 },
+  { name: 'Poke', weight: 30 },
+  { name: 'Indian', weight: 60 },
+  { name: 'BBQ', weight: 30 },
+  { name: 'Italian', weight: 100 },
+  { name: 'Japanese', weight: 40 },
+  { name: 'Vietnamese', weight: 30 },
+  { name: 'Halal', weight: 30 },
+  { name: 'Greek', weight: 40 },
+  { name: 'American', weight: 100 },
+  { name: 'Caribbean', weight: 30 },
+]
 
 /**
  * Create an Uber Eats order. Code will be 201 if the order was created successfully, 4xx if the request was invalid, and 5xx if there was an internal server error.
@@ -55,7 +75,6 @@ const createUberEatsOrder = async () => {
   await page2fa.screenshot({ path: 'out2.png' });
   const frame = await page2fa.waitForSelector('iframe#messagecontframe').then(elem => elem.contentFrame());
   console.debug("[B] Found iframe")
-  const frame = await iframeElem.contentFrame();
   const codeElem = await frame.waitForSelector('td.v1p2b');
   console.debug("[B] Found code element");
   const code = await frame.evaluate(codeElem => codeElem.textContent, codeElem);
@@ -82,9 +101,15 @@ const createUberEatsOrder = async () => {
   */
   await page.waitForSelector('input#location-typeahead-home-input').then(elem => elem.type(process.env.UBER_EATS_ADDRESS));
   console.debug("[A] Typed location");
-  await page.waitForSelector('button[class="du d3 d0 ds cc dv dw al c3 dp af dx dy dz e0 e1 e2 e3 e4 dm e5"]');
-  console.debug("[A] Found search button");
-  await page.click('button[class="du d3 d0 ds cc dv dw al c3 dp af dx dy dz e0 e1 e2 e3 e4 dm e5"]');
+  await new Promise(res => setTimeout(res, 1000));
+  await page.waitForSelector('button[class="du d3 d0 ds cc dv dw al c3 dp af dx dy dz e0 e1 e2 e3 e4 dm e5"]').then(elem => elem.click());
+  console.debug("[A] Clicked search button");
+  await new Promise(res => setTimeout(res, 3000));
+  
+  const category = weighted_random(randomCategories.map(cat => cat.name), randomCategories.map(cat => cat.weight));
+  console.log("Category: " + category);
+  await page.goto(page.url + "&scq=" + encodeURIComponent(category), { waitUntil: 'networkidle2' });
+  console.debug("[A] Navigated to category");
 
   const response = { code: 201, body: 'Order created' };
   await browser.close();
