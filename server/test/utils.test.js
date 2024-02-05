@@ -48,8 +48,6 @@ test('risk distribution with safety > 0 is monotonically decreasing', () => {
 
 test('risk distribution array sums to 1', () => {
   const distribution1 = risk_distribution(10, 5);
-  console.log(distribution1)
-  console.log(distribution1.reduce((a, b) => a + b, 0))
   expect(Math.abs(distribution1.reduce((a, b) => a + b, 0) - 1) < epsilon).toBe(true);
   const distribution2 = risk_distribution(10, 0);
   expect(Math.abs(distribution2.reduce((a, b) => a + b, 0) - 1) < epsilon).toBe(true);
