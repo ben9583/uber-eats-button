@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer');
+const { selectItems } = require('./openai');
 const { risk_distribution, weighted_random } = require('./utils');
+
 
 const num_restaurants = 16; // Number of restaurants to consider
 const safety = 5.0; // Safety factor for the risk distribution (see risk_distribution)
@@ -30,99 +32,92 @@ const randomCategories = [
  * @returns {Promise<{code: number, body: string}>} A promise that resolves to an object with a code and a body
  */
 const createUberEatsOrder = async () => {
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
-  console.debug("[A] Uber Eats page created")
+  console.info("[A] Uber Eats page created")
   const page2fa = await browser.newPage();
-  console.debug("[B] 2FA page created")
+  console.info("[B] 2FA page created")
 
   const mailPromise = new Promise(async res => {
     await page2fa.goto('https://mail.ben9583.com/', { waitUntil: 'networkidle2' });
-    console.debug("[B] Navigated to mail login page")
-    await page2fa.waitForSelector('input#rcmloginuser').then(elem => elem.type(process.env.TWOFACTOR_EMAIL));
-    console.debug("[B] Typed email input")
-    await page2fa.waitForSelector('input#rcmloginpwd').then(elem => elem.type(process.env.TWOFACTOR_PASSWORD));
-    console.debug("[B] Typed password input")
+    console.info("[B] Navigated to mail login page")
+    await page2fa.waitForSelector('input#rcmloginuser').then(elem => elem.type(process.env.TWOFACTOR_EMAIL, { delay: 100 }));
+    console.info("[B] Typed email input")
+    await page2fa.waitForSelector('input#rcmloginpwd').then(elem => elem.type(process.env.TWOFACTOR_PASSWORD, { delay: 100 }));
+    console.info("[B] Typed password input")
     await page2fa.waitForSelector('button#rcmloginsubmit').then(elem => elem.click());
-    console.debug("[B] Clicked login button")
+    console.info("[B] Clicked login button")
     await page2fa.screenshot({ path: 'out2.png' });
     res();
   })
 
   await page.goto('https://www.ubereats.com/', { waitUntil: 'networkidle2' });
-  console.debug("[A] Navigated to Uber Eats page")
+  console.info("[A] Navigated to Uber Eats page")
   await page.waitForSelector('a[data-test="header-sign-in"]')
             .then(elem => new Promise(res => setTimeout(() => res(elem), 1000)))
             .then(elem => new Promise(res => page.screenshot({ path: 'out.png' }).then(() => res(elem))))
             .then(elem => elem.click())
             .then(() => page.waitForNavigation({ waitUntil: 'networkidle2' }));
-  console.debug("[A] Clicked sign in button")
-  await page.waitForSelector('input#PHONE_NUMBER_or_EMAIL_ADDRESS').then(elem => elem.type(process.env.UBER_EATS_EMAIL));
-  console.debug("[A] Typed email")
+  console.info("[A] Clicked sign in button")
+  await page.waitForSelector('input#PHONE_NUMBER_or_EMAIL_ADDRESS').then(elem => elem.type(process.env.UBER_EATS_EMAIL, { delay: 100 }));
+  console.info("[A] Typed email")
   await page.waitForSelector('button#forward-button')
             .then(elem => new Promise(res => setTimeout(() => res(elem), 1000)))
             .then(elem => new Promise(res => page.screenshot({ path: 'out.png' }).then(() => res(elem))))
             .then(elem => elem.click());
-  console.debug("[A] Clicked next button")
+  console.info("[A] Clicked next button")
   await page.screenshot({ path: 'out.png' });
 
   await mailPromise;
-  console.debug("[B] Logged in to mail")
+  console.info("[B] Logged in to mail")
   await new Promise(res => setTimeout(res, 6000));
   await page2fa.reload({ waitUntil: 'networkidle2' });
-  console.debug("[B] Reloaded mail");
+  console.info("[B] Reloaded mail");
   await page2fa.waitForSelector('span[title="admin@uber.com"]')
                .then(elem => new Promise(res => setTimeout(() => res(elem), 2000)))
                .then(elem => new Promise(res => page2fa.screenshot({ path: 'out2.png' }).then(() => res(elem))))
                .then(elem => elem.click());
-  console.debug("[B] Clicked email");
+  console.info("[B] Clicked email");
   await new Promise(res => setTimeout(res, 4000));
   await page2fa.screenshot({ path: 'out2.png' });
   const frame = await page2fa.waitForSelector('iframe#messagecontframe').then(elem => elem.contentFrame());
-  console.debug("[B] Found iframe")
+  console.info("[B] Found iframe")
   const codeElem = await frame.waitForSelector('td.v1p2b');
-  console.debug("[B] Found code element");
+  console.info("[B] Found code element");
   const code = await frame.evaluate(codeElem => codeElem.textContent, codeElem);
-  console.debug("[B] Got code");
+  console.info("[B] Got code");
   console.log("2FA code: " + code);
   await page2fa.screenshot({ path: 'out2.png' });
 
   await page.waitForSelector('input#EMAIL_OTP_CODE-0');
-  console.debug("[A] Found 2FA input");
-  await page.type('input#EMAIL_OTP_CODE-0', code.substring(0, 1));
-  await page.type('input#EMAIL_OTP_CODE-1', code.substring(1, 2));
-  await page.type('input#EMAIL_OTP_CODE-2', code.substring(2, 3));
-  await page.type('input#EMAIL_OTP_CODE-3', code.substring(3, 4));
-  console.debug("[A] Typed 2FA code");
+  console.info("[A] Found 2FA input");
+  await page.type('input#EMAIL_OTP_CODE-0', code.substring(0, 1), { delay: 100 });
+  await page.type('input#EMAIL_OTP_CODE-1', code.substring(1, 2), { delay: 120 });
+  await page.type('input#EMAIL_OTP_CODE-2', code.substring(2, 3), { delay: 84 });
+  await page.type('input#EMAIL_OTP_CODE-3', code.substring(3, 4), { delay: 130 });
+  console.info("[A] Typed 2FA code");
   await new Promise(res => setTimeout(res, 3000));
   await page.screenshot({ path: 'out3.png' });
-  /*
-  await page.waitForSelector('button[aria-label="Main navigation menu"]');
-  console.debug("[A] Found menu button");
-  await page.click('button[aria-label="Main navigation menu"]');
-  await new Promise(res => setTimeout(res, 1000));
-  await page.screenshot({ path: 'out3.png' });
-  console.debug("[A] Clicked menu button");
-  */
-  await page.waitForSelector('input#location-typeahead-home-input').then(elem => elem.type(process.env.UBER_EATS_ADDRESS));
-  console.debug("[A] Typed location");
+
+  await page.waitForSelector('input#location-typeahead-home-input').then(elem => elem.type(process.env.UBER_EATS_ADDRESS, { delay: 100 }));
+  console.info("[A] Typed location");
   await new Promise(res => setTimeout(res, 1000));
   await page.waitForSelector('button[class="du d3 d0 ds cc dv dw al c3 dp af dx dy dz e0 e1 e2 e3 e4 dm e5"]').then(elem => elem.click());
-  console.debug("[A] Clicked search button");
+  console.info("[A] Clicked search button");
   await new Promise(res => setTimeout(res, 3000));
   
   const category = weighted_random(randomCategories.map(cat => cat.name), randomCategories.map(cat => cat.weight));
   console.log("Category: " + category);
   await page.goto(page.url() + "&scq=" + encodeURIComponent(category), { waitUntil: 'networkidle2' });
-  console.debug("[A] Navigated to category");
+  console.info("[A] Navigated to category");
   await new Promise(res => setTimeout(res, 3000));
   await page.screenshot({ path: 'out3.png' });
 
-  console.debug("[A] Finding restaurant");
+  console.info("[A] Finding restaurant");
   const restaurant = weighted_random([...Array(num_restaurants).keys()], risk_distribution(num_restaurants, safety));
   const restaurantLink = await page.$$eval('a[data-testid="store-card"]', (elems, restaurant) => elems[restaurant].href, restaurant);
   await page.goto(restaurantLink, { waitUntil: 'networkidle2' });
-  console.debug("[A] Navigated to restaurant");
+  console.info("[A] Navigated to restaurant");
   await new Promise(res => setTimeout(res, 3000));
   await page.screenshot({ path: 'out3.png' });
 
@@ -130,29 +125,47 @@ const createUberEatsOrder = async () => {
   console.log("Restaurant: " + restaurantName);
 
   const items = await page.$$eval('button[data-testid="quick-add-button"]', elems => elems.map(elem => {
-    const text = elem.parentElement.parentElement.parentElement.innerText;
+    const correctElem = elem.parentElement.parentElement.parentElement;
+    const text = correctElem.innerText;
     let textItems = text.split("\n");
+    const elemUuid = self.crypto.randomUUID();
+    elem.setAttribute('id', elemUuid);
     if(textItems.length === 2) {
       return {
-        name: textItems[0],
+        name: textItems[0].trim(),
         price: textItems[1],
+        elementId: elemUuid,
       };
     } else if(textItems.length >= 3) {
       console.log(textItems[textItems.length - 1])
       console.log(textItems[textItems.length - 1].charAt(textItems[textItems.length - 1].length - 1))
       if(textItems[textItems.length - 1].charAt(textItems[textItems.length - 1].length - 1) == ')') textItems = textItems.slice(0, textItems.length - 1);
       return textItems.length > 2 ? {
-        name: textItems[0],
+        name: textItems[0].trim(),
         price: textItems[1],
         information: textItems.slice(2).join(" | "),
+        elementId: elemUuid,
       } : {
-        name: textItems[0],
+        name: textItems[0].trim(),
         price: textItems[1],
+        elementId: elemUuid,
       };
     }
   }));
 
-  console.log(items);
+  console.log(items)
+  const uniqueItems = [];
+  const seenItems = new Set();
+  for(const item of items) {
+    if(item && !seenItems.has(item.name)) {
+      seenItems.add(item.name);
+      uniqueItems.push(item);
+    }
+  }
+
+  console.log(`Found ${uniqueItems.length} items`);
+  console.info("[A] Querying OpenAI");
+  const selectedItems = await selectItems(restaurantName, uniqueItems);
 
   const response = { code: 201, body: 'Order created' };
   await browser.close();

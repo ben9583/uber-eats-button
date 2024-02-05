@@ -33,21 +33,21 @@ const jwtGuard = (jwt_token) => {
 const authorizationCheck = (req, res) => {
   const authorization = req.headers.authorization;
   if(!authorization) {
-    console.debug('No authorization header');
+    console.info('No authorization header');
     res.status(401).send('Unauthorized');
     return undefined;
   }
 
   const tokens = authorization.split(' ');
   if(tokens.length !== 2 || tokens[0] !== 'Bearer') {
-    console.debug('Invalid authorization header');
+    console.info('Invalid authorization header');
     res.status(401).send('Unauthorized');
     return undefined;
   }
 
   const jwt_token = tokens[1];
   try { jwtGuard(jwt_token) } catch (error) {
-    console.debug(error.message);
+    console.info(error.message);
     res.status(401).send('Unauthorized');
     return undefined;
   }
