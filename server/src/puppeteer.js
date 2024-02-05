@@ -129,6 +129,31 @@ const createUberEatsOrder = async () => {
   const restaurantName = (await page.title()).split(" Menu ")[0].substring(6);
   console.log("Restaurant: " + restaurantName);
 
+  const items = await page.$$eval('button[data-testid="quick-add-button"]', elems => elems.map(elem => {
+    const text = elem.parentElement.parentElement.parentElement.innerText;
+    let textItems = text.split("\n");
+    if(textItems.length === 2) {
+      return {
+        name: textItems[0],
+        price: textItems[1],
+      };
+    } else if(textItems.length >= 3) {
+      console.log(textItems[textItems.length - 1])
+      console.log(textItems[textItems.length - 1].charAt(textItems[textItems.length - 1].length - 1))
+      if(textItems[textItems.length - 1].charAt(textItems[textItems.length - 1].length - 1) == ')') textItems = textItems.slice(0, textItems.length - 1);
+      return textItems.length > 2 ? {
+        name: textItems[0],
+        price: textItems[1],
+        information: textItems.slice(2).join(" | "),
+      } : {
+        name: textItems[0],
+        price: textItems[1],
+      };
+    }
+  }));
+
+  console.log(items);
+
   const response = { code: 201, body: 'Order created' };
   await browser.close();
   return response;
