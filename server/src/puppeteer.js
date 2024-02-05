@@ -1,5 +1,8 @@
 const puppeteer = require('puppeteer');
-const { weighted_random } = require('./utils');
+const { risk_distribution, weighted_random } = require('./utils');
+
+const num_restaurants = 16; // Number of restaurants to consider
+const safety = 5.0; // Safety factor for the risk distribution (see risk_distribution)
 
 const randomCategories = [
   { name: 'Pizza', weight: 100 },
@@ -40,7 +43,7 @@ const createUberEatsOrder = async () => {
     console.debug("[B] Typed email input")
     await page2fa.waitForSelector('input#rcmloginpwd').then(elem => elem.type(process.env.TWOFACTOR_PASSWORD));
     console.debug("[B] Typed password input")
-    await page2fa.click('button#rcmloginsubmit');
+    await page2fa.waitForSelector('button#rcmloginsubmit').then(elem => elem.click());
     console.debug("[B] Clicked login button")
     await page2fa.screenshot({ path: 'out2.png' });
     res();
@@ -110,8 +113,21 @@ const createUberEatsOrder = async () => {
   
   const category = weighted_random(randomCategories.map(cat => cat.name), randomCategories.map(cat => cat.weight));
   console.log("Category: " + category);
-  await page.goto(page.url + "&scq=" + encodeURIComponent(category), { waitUntil: 'networkidle2' });
+  await page.goto(page.url() + "&scq=" + encodeURIComponent(category), { waitUntil: 'networkidle2' });
   console.debug("[A] Navigated to category");
+  await new Promise(res => setTimeout(res, 3000));
+  await page.screenshot({ path: 'out3.png' });
+
+  console.debug("[A] Finding restaurant");
+  const restaurant = weighted_random([...Array(num_restaurants).keys()], risk_distribution(num_restaurants, safety));
+  const restaurantLink = await page.$$eval('a[data-testid="store-card"]', (elems, restaurant) => elems[restaurant].href, restaurant);
+  await page.goto(restaurantLink, { waitUntil: 'networkidle2' });
+  console.debug("[A] Navigated to restaurant");
+  await new Promise(res => setTimeout(res, 3000));
+  await page.screenshot({ path: 'out3.png' });
+
+  const restaurantName = (await page.title()).split(" Menu ")[0].substring(6);
+  console.log("Restaurant: " + restaurantName);
 
   const response = { code: 201, body: 'Order created' };
   await browser.close();
