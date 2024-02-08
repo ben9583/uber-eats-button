@@ -1,4 +1,11 @@
-const puppeteer = require('puppeteer');
+const p = require('puppeteer');
+const fs = require('fs');
+
+/** @type {typeof p} */
+const puppeteer = require('puppeteer-extra')
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+puppeteer.use(StealthPlugin());
+
 const { selectItems } = require('./openai');
 const { risk_distribution, weighted_random } = require('./utils');
 
@@ -28,11 +35,34 @@ const randomCategories = [
 ]
 
 /**
- * Create an Uber Eats order. Code will be 201 if the order was created successfully, 4xx if the request was invalid, and 5xx if there was an internal server error.
- * @returns {Promise<{code: number, body: string}>} A promise that resolves to an object with a code and a body
+ * Creates an Uber eats session by loading in the saved credentials at creds/ubereats.com.json and creds/auth.uber.com.json if present, otherwise going through the 2fa login process.
+ * @param {p.Browser} browser The puppeteer browser instance
  */
-const createUberEatsOrder = async () => {
-  const browser = await puppeteer.launch({ headless: false });
+const loadUberEatsSession = async (browser) => {
+  const ubereatsCreds = fs.existsSync('creds/ubereats.com.json') ? JSON.parse(fs.readFileSync('creds/ubereats.com.json')) : null;
+  const authCreds = fs.existsSync('creds/auth.uber.com.json') ? JSON.parse(fs.readFileSync('creds/auth.uber.com.json')) : null;
+  if(ubereatsCreds && authCreds) {
+    console.info("[A] Loading credentials")
+    const page = await browser.newPage();
+    await page.goto('https://www.ubereats.com/', { waitUntil: 'networkidle2' });
+    await page.setCookie(...ubereatsCreds);
+    await page.goto('https://auth.uber.com', { waitUntil: 'networkidle2' });
+    await page.setCookie(...authCreds);
+
+    console.info("[A] Verifying credentials")
+    await page.goto('https://ubereats.com/login-redirect', { waitUntil: 'networkidle2' });
+    await new Promise(res => setTimeout(res, 3000));
+    const success = !((await page.content()).includes("What's your phone number or email?"))
+    await page.close();
+    if(success) {
+      console.info("[A] Loaded credentials")
+      return
+    }
+    console.info("[A] Failed to load credentials")
+  } else {
+    console.info("[A] No credentials found")
+  }
+
   const page = await browser.newPage();
   console.info("[A] Uber Eats page created")
   const page2fa = await browser.newPage();
@@ -99,11 +129,30 @@ const createUberEatsOrder = async () => {
   await new Promise(res => setTimeout(res, 3000));
   await page.screenshot({ path: 'out3.png' });
 
-  await page.waitForSelector('input#location-typeahead-home-input').then(elem => elem.type(process.env.UBER_EATS_ADDRESS, { delay: 100 }));
-  console.info("[A] Typed location");
-  await new Promise(res => setTimeout(res, 1000));
-  await page.waitForSelector('button[class="du d3 d0 ds cc dv dw al c3 dp af dx dy dz e0 e1 e2 e3 e4 dm e5"]').then(elem => elem.click());
-  console.info("[A] Clicked search button");
+  if (!fs.existsSync('creds')) {
+    fs.mkdirSync('creds');
+  }
+
+  await page.cookies().then(cookies => fs.writeFileSync('creds/ubereats.com.json', JSON.stringify(cookies, null, 2)));
+  await page.goto('https://auth.uber.com', { waitUntil: 'networkidle2' });
+  await page.cookies().then(cookies => fs.writeFileSync('creds/auth.uber.com.json', JSON.stringify(cookies, null, 2)));
+  console.info("[A] Saved credentials");
+
+  await page.close();
+  await page2fa.close();
+}
+
+/**
+ * Create an Uber Eats order. Code will be 201 if the order was created successfully, 4xx if the request was invalid, and 5xx if there was an internal server error.
+ * @returns {Promise<{code: number, body: string}>} A promise that resolves to an object with a code and a body
+ */
+const createUberEatsOrder = async () => {
+  const browser = await puppeteer.launch({ headless: false, executablePath: p.executablePath() });
+
+  await loadUberEatsSession(browser);
+
+  const page = await browser.newPage();
+  await page.goto('https://www.ubereats.com/', { waitUntil: 'networkidle2' });
   await new Promise(res => setTimeout(res, 3000));
   
   const category = weighted_random(randomCategories.map(cat => cat.name), randomCategories.map(cat => cat.weight));
@@ -125,11 +174,11 @@ const createUberEatsOrder = async () => {
   console.log("Restaurant: " + restaurantName);
 
   const items = await page.$$eval('button[data-testid="quick-add-button"]', elems => elems.map(elem => {
-    const correctElem = elem.parentElement.parentElement.parentElement;
+    const correctElem = elem.parentElement.parentElement.parentElement.parentElement;
     const text = correctElem.innerText;
     let textItems = text.split("\n");
-    const elemUuid = self.crypto.randomUUID();
-    elem.setAttribute('id', elemUuid);
+    const elemUuid = correctElem.parentElement.getAttribute("data-test");
+    if(elemUuid === null) return;
     if(textItems.length === 2) {
       return {
         name: textItems[0].trim(),
@@ -166,6 +215,28 @@ const createUberEatsOrder = async () => {
   console.log(`Found ${uniqueItems.length} items`);
   console.info("[A] Querying OpenAI");
   const selectedItems = await selectItems(restaurantName, uniqueItems);
+
+  for(const item of selectedItems) {
+    console.info(`[A] Adding ${item.name} to cart`)
+    await page.waitForSelector(`li[data-test="${item.elementId}"] a`).then(elem => elem.click());
+    await new Promise(res => setTimeout(res, 1000));
+    await page.$$eval("div[data-testid='customization-pick-one'], div[data-testid='customization-pick-many']", elems => elems.forEach(elem => {
+      if(!elem.textContent.includes("Required")) return;
+      const options = elem.querySelectorAll("input");
+      const randomOption = options[Math.floor(Math.random() * options.length)];
+      randomOption.click();
+    }));
+    await new Promise(res => setTimeout(res, 1000));
+    await page.waitForSelector('button[aria-label="Add 1 to order"]').then(elem => elem.click());
+    await new Promise(res => setTimeout(res, 7000));
+    await page.reload({ waitUntil: 'networkidle2' });
+    await new Promise(res => setTimeout(res, 3000));
+  }
+
+  await page.goto('https://www.ubereats.com/checkout', { waitUntil: 'networkidle2' });
+  console.info("[A] Navigated to checkout");
+  await new Promise(res => setTimeout(res, 3000));
+  await page.screenshot({ path: 'out3.png' });
 
   const response = { code: 201, body: 'Order created' };
   await browser.close();

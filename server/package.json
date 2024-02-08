@@ -10,11 +10,16 @@
   },
   "author": "Ben Plate",
   "license": "MIT",
+  "nodemonConfig": {
+    "ignore": ["creds/**"]
+  },
   "dependencies": {
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "openai": "^4.26.0",
     "puppeteer": "^21.11.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
