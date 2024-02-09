@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uber Eats Button — Order Status</title>
+  <style>
+    /* Base styles */
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      color: #e0e0e0;
+      background-color: #1e1e26;
+      line-height: 1.6;
+    }
+
+    .container {
+      width: 80%;
+      max-width: 720px;
+      margin: auto;
+      margin-top: 2em;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, h5, h6 {
+      color: #fafafa;
+      margin-top: 0;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+    /* Buttons */
+    .btn {
+      display: inline-block;
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    #order-progress {
+      display: flex;
+      flex-direction: column;
+      margin-top: 2em;
+    }
+
+    #order-progress h3 {
+      display: inline-block;
+    }
+
+    .hidden {
+      opacity: 0.3;
+    }
+
+    .success-icon {
+      margin-left: 10px;
+      height: 20px;
+      width: auto;
+    }
+
+    .error-icon {
+      margin-left: 10px;
+      height: 20px;
+      width: auto;
+    }
+
+    .loading-icon {
+      margin-left: 10px;
+      width: 20px;
+      height: 20px;
+      -webkit-animation: spin 2s linear infinite;
+      -moz-animation: spin 2s linear infinite;
+      animation: spin 2s linear infinite;
+    }
+
+    @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+    @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+    @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="text-align: center; width: 100%;">Order Status</h1>
+    <p id="not-found" style="display:none;margin-bottom:3em;">There have not been any orders placed. Press the button to get started and this page will refresh automatically.</p>
+    <div id="order-progress">
+      <div id="credentials"><h3>Loading credentials</h3><img class="loading-icon" src="/loading.svg" /></div>
+      <div id="credentials-details" style="margin-left: 20px;">
+        <div id="entering-email" class="hidden"><h3>Entering email</h3></div>
+        <div id="getting-two-factor" class="hidden"><h3>Retrieving two factor code</h3></div>
+        <div id="entering-two-factor" class="hidden"><h3>Entering two factor code</h3></div>
+      </div>
+      <div id="category">
+        <div id="selecting-category" class="hidden"><h3>Selecting category</h3></div>
+        <div id="chosen-category"></div>
+      </div>
+      <div id="restaurant">
+        <div id="selecting-restaurant" class="hidden"><h3>Selecting restaurant</h3></div>
+        <div id="chosen-restaurant"></div>
+      </div>
+      <div id="menu">
+        <div id="selecting-menu" class="hidden"><h3>Selecting menu items</h3></div>
+        <div id="chosen-menu"></div>
+      </div>
+      <div id="adding-items" class="hidden"><h3>Adding items to cart</h3></div>
+      <div id="ordering" class="hidden"><h3>Placing order</h3></div>
+      <!--<div id="credentials3"><h3>Loading credentials...</h3><img class="success-icon" src="/success.png" /></div>-->
+      <!--<div id="credentials4"><h3>Loading credentials...</h3><img class="error-icon" src="/error.png" /></div>-->
+    </div>
+  </div>
+  <script>
+    const makeProgess = (elem) => {
+      const loadingImage = document.createElement('img');
+      loadingImage.src = '/loading.svg';
+      loadingImage.classList.add('loading-icon');
+      elem.querySelectorAll('img').forEach(img => img.remove());
+      elem.appendChild(loadingImage);
+      elem.className = "";
+    }
+
+    const makeSuccess = (elem) => {
+      const successImage = document.createElement('img');
+      successImage.src = '/success.png';
+      successImage.classList.add('success-icon');
+      elem.querySelectorAll('img').forEach(img => img.remove());
+      elem.appendChild(successImage);
+      elem.className = "";
+    }
+
+    const makeError = (elem) => {
+      const errorImage = document.createElement('img');
+      errorImage.src = '/error.png';
+      errorImage.classList.add('error-icon');
+      elem.querySelectorAll('img').forEach(img => img.remove());
+      elem.appendChild(errorImage);
+      elem.className = "";
+    }
+
+    const makeHidden = (elem) => {
+      elem.querySelectorAll('img').forEach(img => img.remove());
+      elem.className = "hidden";
+    }
+
+    const refreshData = () => {
+      fetch('/order').then(response => response.json()).then(body => {
+        if(body.status === 404) {
+          document.getElementById('not-found').style.display = 'block';
+          document.getElementById('order-progress').style.display = 'none';
+          return;
+        } else {
+          document.getElementById('not-found').style.display = 'none';
+          document.getElementById('order-progress').style.display = 'block';
+        }
+
+        let previous = true;
+        if(!body.data.credentials) {
+          if(!previous) makeHidden(document.getElementById('credentials'));
+          else if(body.status === 200) makeProgess(document.getElementById('credentials'));
+          else if(body.status === 201) makeSuccess(document.getElementById('credentials'));
+          else makeError(document.getElementById('credentials'));
+          previous = false;
+          makeHidden(document.getElementById('entering-email'));
+          makeHidden(document.getElementById('getting-two-factor'));
+          makeHidden(document.getElementById('entering-two-factor'));
+        } else if(body.data.credentials === true) {
+          makeSuccess(document.getElementById('credentials'));
+          makeHidden(document.getElementById('entering-email'));
+          makeHidden(document.getElementById('getting-two-factor'));
+          makeHidden(document.getElementById('entering-two-factor'));
+        } else {
+          if(body.data.credentials.enteringEmail === false) {
+            if(!previous) makeHidden(document.getElementById('entering-email'));
+            else if(body.status === 200) makeProgess(document.getElementById('entering-email'));
+            else if(body.status === 201) makeSuccess(document.getElementById('entering-email'));
+            else {
+              makeError(document.getElementById('entering-email'));
+              makeError(document.getElementById('credentials'));
+            }
+            previous = false;
+          }
+          else if(body.data.credentials.gettingTwoFactor === false) {
+            makeSuccess(document.getElementById('entering-email'));
+            if(!previous) makeHidden(document.getElementById('getting-two-factor'));
+            else if(body.status === 200) makeProgess(document.getElementById('getting-two-factor'));
+            else if(body.status === 201) makeSuccess(document.getElementById('getting-two-factor'));
+            else {
+              makeError(document.getElementById('getting-two-factor'));
+              makeError(document.getElementById('credentials'));
+            }
+            previous = false;
+          }
+          else if(body.data.credentials.enteringTwoFactor === false) {
+            makeSuccess(document.getElementById('entering-email'));
+            makeSuccess(document.getElementById('getting-two-factor'));
+            if(!previous) makeHidden(document.getElementById('entering-two-factor'));
+            else if(body.status === 200) makeProgess(document.getElementById('entering-two-factor'));
+            else if(body.status === 201) makeSuccess(document.getElementById('entering-two-factor'));
+            else {
+              makeError(document.getElementById('entering-two-factor'));
+              makeError(document.getElementById('credentials'));
+            }
+            previous = false;
+          }
+          else {
+            makeSuccess(document.getElementById('entering-email'));
+            makeSuccess(document.getElementById('getting-two-factor'));
+            makeSuccess(document.getElementById('entering-two-factor'));
+            makeSuccess(document.getElementById('credentials'));
+          }
+        }
+
+        if(!previous) makeHidden(document.getElementById('selecting-category'));
+        else if(!body.data.category) {
+          if(body.status === 200) makeProgess(document.getElementById('selecting-category'));
+          else if(body.status === 201) makeSuccess(document.getElementById('selecting-category'));
+          else makeError(document.getElementById('selecting-category'));
+          previous = false;
+          document.getElementById('chosen-category').innerHTML = "";
+        } else {
+          makeSuccess(document.getElementById('selecting-category'));
+          document.getElementById('chosen-category').innerHTML = `<img src="${body.data.category.image}" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px;" /><h4>${body.data.category.name}</h4>`;
+        }
+
+        if(!previous) makeHidden(document.getElementById('selecting-restaurant'));
+        else if(!body.data.restaurant) {
+          if(body.status === 200) makeProgess(document.getElementById('selecting-restaurant'));
+          else if(body.status === 201) makeSuccess(document.getElementById('selecting-restaurant'));
+          else makeError(document.getElementById('selecting-restaurant'));
+          previous = false;
+          document.getElementById('chosen-restaurant').innerHTML = "";
+        } else {
+          makeSuccess(document.getElementById('selecting-restaurant'));
+          document.getElementById('chosen-restaurant').innerHTML = `<img src="${body.data.restaurant.image}" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px;" /><h4>${body.data.restaurant.name}</h4>`;
+        }
+
+        if(!previous) makeHidden(document.getElementById('selecting-menu'));
+        else if(!body.data.menuItems) {
+          if(body.status === 200) makeProgess(document.getElementById('selecting-menu'));
+          else if(body.status === 201) makeSuccess(document.getElementById('selecting-menu'));
+          else makeError(document.getElementById('selecting-menu'));
+          previous = false;
+          document.getElementById('chosen-menu').innerHTML = "";
+        } else {
+          makeSuccess(document.getElementById('selecting-menu'));
+          document.getElementById('chosen-menu').innerHTML = body.data.menuItems.map(item => `<div style="display: flex; align-items: center; margin-top: 10px;"><img src="${item.image}" style="width: 100px; height: 100px; border-radius: 50%;" /><div style="margin-left: 20px;"><h4>${item.name}</h4><p>${item.price}</p><p>${item.description ?? ""}</p></div></div>`).join('');
+        }
+
+        if(!previous) makeHidden(document.getElementById('adding-items'));
+        else if(!body.data.addingItems) {
+          if(body.status === 200) makeProgess(document.getElementById('adding-items'));
+          else if(body.status === 201) makeSuccess(document.getElementById('adding-items'));
+          else makeError(document.getElementById('adding-items'));
+          previous = false;
+        } else {
+          makeSuccess(document.getElementById('adding-items'));
+        }
+
+        if(!previous) makeHidden(document.getElementById('ordering'));
+        else if(!body.data.ordered) {
+          if(body.status === 200) makeProgess(document.getElementById('ordering'));
+          else if(body.status === 201) makeSuccess(document.getElementById('ordering'));
+          else makeError(document.getElementById('ordering'));
+          previous = false;
+        } else {
+          makeSuccess(document.getElementById('ordering'));
+        }
+      });
+    }
+
+    setInterval(refreshData, 3000);
+    refreshData();
+  </script>
+</body>
+</html>

@@ -2,8 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const uber_eats_puppeteer = require('./puppeteer');
 
-const responses = new Map();
 const idempotentKeys = new Set();
+let mostRecentOrder = undefined;
 
 /**
  * Runs checks on the passed JWT token to ensure it is valid
@@ -72,14 +72,18 @@ const orderDryRunHandler = async (req, res) => {
  * @param {express.Request} req The express request object
  * @param {express.Response} res The express response object
  */
-const orderHandler = async (req, res) => {
+const orderHandler = (req, res) => {
   const token = authorizationCheck(req, res);
   if(!token) return;
 
-  responses.set(token.jti, {code: 102, body: 'Processing'});
+  if(uber_eats_puppeteer.getUberEatsOrderStatus(mostRecentOrder)?.status === 200) {
+    res.status(409).send('Conflict');
+    reutrn
+  }
+
+  mostRecentOrder = token.jti;
   res.status(202).send('Accepted');
-  const response = await uber_eats_puppeteer.createUberEatsOrder(token);
-  responses.set(token.jti, response);
+  uber_eats_puppeteer.createUberEatsOrder(token.jti, () => {})
 }
 
 /**
@@ -89,12 +93,12 @@ const orderHandler = async (req, res) => {
  */
 const orderGetter = (req, res) => {
   const id = req.query.id;
-  const response = responses.get(id);
+  const response = uber_eats_puppeteer.getUberEatsOrderStatus(id ?? mostRecentOrder);
   if(!response) {
-    res.status(404).send('Not Found');
+    res.status(404).send({ status: 404, message: 'Not Found'});
     return;
   }
-  res.status(200).send(response)
+  res.status(response.status).send(response)
 }
 
 const app = express();
@@ -112,6 +116,10 @@ const startServer = () => {
   app.put('/order-dry-run', orderDryRunHandler);
   app.put('/order', orderHandler);
   app.get('/order', orderGetter);
+  app.get('/order-status', (_, res) => { res.sendFile('static/order.html', { root: __dirname }) });
+  app.get('/loading.svg', (_, res) => { res.sendFile('static/loading.svg', { root: __dirname }) });
+  app.get('/success.png', (_, res) => { res.sendFile('static/success.png', { root: __dirname }) });
+  app.get('/error.png', (_, res) => { res.sendFile('static/error.png', { root: __dirname }) });
 
   server = app.listen(3000, () => {
     console.log('Server is running on port 3000');
