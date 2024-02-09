@@ -6,20 +6,20 @@
  * @template T
  */
 const weighted_random = (items, weights) => {
-  if(items.length !== weights.length) throw new Error(`Items and weights must be the same length, but got ${items.length} !== ${weights.length}.`);
+  if (items.length !== weights.length)
+    throw new Error(
+      `Items and weights must be the same length, but got ${items.length} !== ${weights.length}.`
+    );
 
   let i;
-  for (i = 1; i < weights.length; i++)
-    weights[i] += weights[i - 1];
-  
+  for (i = 1; i < weights.length; i++) weights[i] += weights[i - 1];
+
   let random = Math.random() * weights[weights.length - 1];
-  
-  for (i = 0; i < weights.length; i++)
-    if (weights[i] > random)
-      break;
-  
+
+  for (i = 0; i < weights.length; i++) if (weights[i] > random) break;
+
   return items[i];
-}
+};
 
 /**
  * Creates a discrete probability distribution for a given number of entries and a safety factor.
@@ -35,12 +35,15 @@ const risk_distribution = (num_entries, safety) => {
   function: --------------------------------
                         e^s - 1
   */
-  if(safety === 0) return Array(num_entries).fill(1 / num_entries);
-  const sampler = x => (Math.exp(safety / num_entries) - 1) * Math.exp(safety * (num_entries - x - 1) / num_entries) / (Math.exp(safety) - 1);
+  if (safety === 0) return Array(num_entries).fill(1 / num_entries);
+  const sampler = (x) =>
+    ((Math.exp(safety / num_entries) - 1) *
+      Math.exp((safety * (num_entries - x - 1)) / num_entries)) /
+    (Math.exp(safety) - 1);
   return [...Array(num_entries).keys()].map(sampler);
-}
+};
 
 module.exports = {
   risk_distribution,
-  weighted_random
+  weighted_random,
 };
