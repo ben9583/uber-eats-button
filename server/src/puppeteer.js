@@ -9,7 +9,6 @@ puppeteer.use(StealthPlugin());
 const { selectItems } = require('./openai');
 const { risk_distribution, weighted_random } = require('./utils');
 
-
 const num_restaurants = 16; // Number of restaurants to consider
 const safety = 5.0; // Safety factor for the risk distribution (see risk_distribution)
 
@@ -219,21 +218,21 @@ const createUberEatsOrder = async () => {
   for(const item of selectedItems) {
     console.info(`[A] Adding ${item.name} to cart`)
     await page.waitForSelector(`li[data-test="${item.elementId}"] a`).then(elem => elem.click());
-    await new Promise(res => setTimeout(res, 1000));
+    await new Promise(res => setTimeout(res, 2000));
     await page.$$eval("div[data-testid='customization-pick-one'], div[data-testid='customization-pick-many']", elems => elems.forEach(elem => {
       if(!elem.textContent.includes("Required")) return;
       const options = elem.querySelectorAll("input");
       const randomOption = options[Math.floor(Math.random() * options.length)];
       randomOption.click();
     }));
-    await new Promise(res => setTimeout(res, 1000));
-    await page.waitForSelector('button[aria-label="Add 1 to order"]').then(elem => elem.click());
-    await new Promise(res => setTimeout(res, 7000));
+    await new Promise(res => setTimeout(res, 2000));
+    await page.waitForSelector('div[data-test="add-to-cart-cta"] button').then(elem => elem.click());
+    await new Promise(res => setTimeout(res, 6000));
     await page.reload({ waitUntil: 'networkidle2' });
     await new Promise(res => setTimeout(res, 3000));
   }
 
-  await page.goto('https://www.ubereats.com/checkout', { waitUntil: 'networkidle2' });
+  await page.goto('https://www.ubereats.com/checkout'); // networkidle2 doesn't work here; perpetually loading
   console.info("[A] Navigated to checkout");
   await new Promise(res => setTimeout(res, 3000));
   await page.screenshot({ path: 'out3.png' });
