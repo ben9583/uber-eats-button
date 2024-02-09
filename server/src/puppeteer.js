@@ -282,7 +282,7 @@ const createUberEatsOrder = async (orderId, callback) => {
       randomCategories.map((cat) => cat.weight)
     );
     console.log("Category: " + category);
-    await page.goto(page.url() + "&scq=" + encodeURIComponent(category), {
+    await page.goto(page.url() + "&sf=JTVCJTdCJTIydXVpZCUyMiUzQSUyMmIxOWM4OTc4LTIwM2MtNGE4OS1hMjNlLWU0ODQyZmViZTRmZiUyMiUyQyUyMm9wdGlvbnMlMjIlM0ElNUIlN0IlMjJ1dWlkJTIyJTNBJTIyMmM3Y2Y3ZWYtNzMwZi00MzFmLTkwNzItMjZiYzM5ZjdjMDQyJTIyJTdEJTVEJTdEJTVE&scq=" + encodeURIComponent(category), {
       waitUntil: "networkidle2",
     });
     console.info("[A] Navigated to category");

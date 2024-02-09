@@ -27,7 +27,7 @@
     /* Typography */
     h1, h2, h3, h4, h5, h6 {
       color: #fafafa;
-      margin-top: 0;
+      margin-bottom: 0;
     }
 
     p {
@@ -57,6 +57,49 @@
 
     #order-progress h3 {
       display: inline-block;
+    }
+
+    #chosen-category {
+      display: inline-block;
+      border-radius: 10px;
+      border-width: 1px;
+      border-color: #e0e0e0;
+      padding: 10px;
+      margin-top: 10px;
+      min-width: 100px;
+
+      & h4 {
+        text-align: center;
+        min-width: 100px;
+      }
+    }
+
+    #chosen-restaurant {
+      display: inline-block;
+      border-radius: 10px;
+      border-width: 1px;
+      border-color: #e0e0e0;
+      padding: 10px;
+      margin-top: 10px;
+      min-width: 100px;
+      
+      & h4 {
+        text-align: center;
+        min-width: 100px;
+      }
+    }
+
+    #chosen-menu p {
+      line-height: 1.2;
+    }
+
+    #chosen-menu h4 {
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+
+    #ordering {
+      margin-bottom: 5em;
     }
 
     .hidden {
@@ -114,39 +157,41 @@
       </div>
       <div id="adding-items" class="hidden"><h3>Adding items to cart</h3></div>
       <div id="ordering" class="hidden"><h3>Placing order</h3></div>
-      <!--<div id="credentials3"><h3>Loading credentials...</h3><img class="success-icon" src="/success.png" /></div>-->
-      <!--<div id="credentials4"><h3>Loading credentials...</h3><img class="error-icon" src="/error.png" /></div>-->
     </div>
   </div>
   <script>
     const makeProgess = (elem) => {
+      if(elem.className === "progress") return;
       const loadingImage = document.createElement('img');
       loadingImage.src = '/loading.svg';
       loadingImage.classList.add('loading-icon');
       elem.querySelectorAll('img').forEach(img => img.remove());
       elem.appendChild(loadingImage);
-      elem.className = "";
+      elem.className = "progress";
     }
 
     const makeSuccess = (elem) => {
+      if(elem.className === "success") return;
       const successImage = document.createElement('img');
       successImage.src = '/success.png';
       successImage.classList.add('success-icon');
       elem.querySelectorAll('img').forEach(img => img.remove());
       elem.appendChild(successImage);
-      elem.className = "";
+      elem.className = "success";
     }
 
     const makeError = (elem) => {
+      if(elem.className === "error") return;
       const errorImage = document.createElement('img');
       errorImage.src = '/error.png';
       errorImage.classList.add('error-icon');
       elem.querySelectorAll('img').forEach(img => img.remove());
       elem.appendChild(errorImage);
-      elem.className = "";
+      elem.className = "error";
     }
 
     const makeHidden = (elem) => {
+      if(elem.className === "hidden") return;
       elem.querySelectorAll('img').forEach(img => img.remove());
       elem.className = "hidden";
     }
@@ -219,32 +264,42 @@
           }
         }
 
-        if(!previous) makeHidden(document.getElementById('selecting-category'));
-        else if(!body.data.category) {
+        if(!previous) { 
+          makeHidden(document.getElementById('selecting-category')); 
+          document.getElementById('chosen-category').innerHTML = "";
+        } else if(!body.data.category) {
           if(body.status === 200) makeProgess(document.getElementById('selecting-category'));
           else if(body.status === 201) makeSuccess(document.getElementById('selecting-category'));
           else makeError(document.getElementById('selecting-category'));
           previous = false;
           document.getElementById('chosen-category').innerHTML = "";
+          document.getElementById('chosen-category').style.borderStyle = "none";
         } else {
           makeSuccess(document.getElementById('selecting-category'));
-          document.getElementById('chosen-category').innerHTML = `<img src="${body.data.category.image}" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px;" /><h4>${body.data.category.name}</h4>`;
+          document.getElementById('chosen-category').innerHTML = `<img src="${body.data.category.image}" style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; margin-top: 10px;" /><h4>${body.data.category.name}</h4>`;
+          document.getElementById('chosen-category').style.borderStyle = "solid";
         }
 
-        if(!previous) makeHidden(document.getElementById('selecting-restaurant'));
-        else if(!body.data.restaurant) {
+        if(!previous) {
+          makeHidden(document.getElementById('selecting-restaurant'));
+          document.getElementById('chosen-restaurant').innerHTML = "";
+        } else if(!body.data.restaurant) {
           if(body.status === 200) makeProgess(document.getElementById('selecting-restaurant'));
           else if(body.status === 201) makeSuccess(document.getElementById('selecting-restaurant'));
           else makeError(document.getElementById('selecting-restaurant'));
           previous = false;
           document.getElementById('chosen-restaurant').innerHTML = "";
+          document.getElementById('chosen-restaurant').style.borderStyle = "none";
         } else {
           makeSuccess(document.getElementById('selecting-restaurant'));
-          document.getElementById('chosen-restaurant').innerHTML = `<img src="${body.data.restaurant.image}" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 10px;" /><h4>${body.data.restaurant.name}</h4>`;
+          document.getElementById('chosen-restaurant').innerHTML = `<img src="${body.data.restaurant.image}" style="display: block; width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; margin-top: 10px;" /><h4>${body.data.restaurant.name}</h4>`;
+          document.getElementById('chosen-restaurant').style.borderStyle = "solid";
         }
 
-        if(!previous) makeHidden(document.getElementById('selecting-menu'));
-        else if(!body.data.menuItems) {
+        if(!previous) {
+          makeHidden(document.getElementById('selecting-menu'));
+          document.getElementById('chosen-menu').innerHTML = "";
+        } else if(!body.data.menuItems) {
           if(body.status === 200) makeProgess(document.getElementById('selecting-menu'));
           else if(body.status === 201) makeSuccess(document.getElementById('selecting-menu'));
           else makeError(document.getElementById('selecting-menu'));
