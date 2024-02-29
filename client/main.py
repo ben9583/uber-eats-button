@@ -26,30 +26,7 @@ with open('./secret.txt', 'r') as f:
   secret = f.read()
 
 jwt_gen = Jwt(secret)
-
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-wlan.connect(ssid_stored, password_stored)
-
-print('Connecting to Network...')
-start_time = time.time()
-while len(ssid_stored) > 0 and len(password_stored) > 0 and not wlan.isconnected():
-  if time.time() - start_time > 10:
-    print("Failed to connect to network")
-    break
-
-  time.sleep(1)
-
-if not wlan.isconnected():
-  # Switch to access point mode instead
-  wlan.active(False)
-  wlan = network.WLAN(network.AP_IF)
-  wlan.config(essid=ap_ssid, password=ap_password)
-  wlan.active(True)
-  is_ap = True
-
-def format_time(timetuple: tuple) -> str:
-  return f"{dows[timetuple[6]]}, {timetuple[2]} {months[timetuple[1]]} {timetuple[0]} {timetuple[3]}:{timetuple[4]}:{timetuple[5]} GMT"
+wlan = network.WLAN()
 
 def error_400() -> bytes:
   response = f"HTTP/1.1 400 Bad Request\r\nServer: {server_name}\r\nContent-Type: text/plain;charset=utf-8\r\nConnection: close\r\nContent-Length: 11\r\n\r\nBad Request"
@@ -218,15 +195,18 @@ def sta_mode() -> None:
       time.sleep_ms(int(100 * (1.5 ** num_tries)))
       continue
     elif first_connection:
-      time.sleep(5)
+      print('Connected to Network')
+      led_pin.value(1)
+      time.sleep(3)
 
       print("Config: " + str(wlan.ifconfig()))
       print("Old time: " + str(time.gmtime()))
       set_time()
       print("New time: " + str(time.gmtime()))
+      led_pin.value(0)
       first_connection = False
 
-    # button pressing code goes here
+    num_tries = 0
     time.sleep_ms(50)
 
     if button_pin.value() == 0 and debounce:
@@ -234,7 +214,10 @@ def sta_mode() -> None:
       print("Button Pressed")
       led_pin.value(1)
       try:
-        requests.put('http://ec2-54-202-136-67.us-west-2.compute.amazonaws.com/order', headers={'Authorization': 'Bearer ' + jwt_gen.encode({
+        # http://ec2-54-202-136-67.us-west-2.compute.amazonaws.com/order
+        # https://raspi.ben9583.com/order
+        # http://duststorm.ocf.berkeley.edu/order
+        requests.put('http://duststorm.ocf.berkeley.edu/order', headers={'Authorization': 'Bearer ' + jwt_gen.encode({
           "sub": "random-order",
           "iss": "uber-eats-client.ben9583.com",
           "aud": "uber-eats-server.ben9583.com",
@@ -245,6 +228,8 @@ def sta_mode() -> None:
       except BaseException as e:
         print("Request failed")
         print(e)
+        led_pin.value(0)
+        machine.soft_reset()
     elif button_pin.value() == 1:
       debounce = True
       led_pin.value(0)
@@ -258,6 +243,5 @@ while True:
   if is_ap:
     ap_mode()
   else:
-    print('Connected to Network')
     sta_mode()
   
