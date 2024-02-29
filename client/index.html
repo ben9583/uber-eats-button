@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uber Eats Button Configuration</title>
+  <link rel="stylesheet" href="pico.min.css">
+</head>
+<body>
+  <header class="container">
+    <hgroup>
+      <h1 style="margin-bottom:5px">Uber Eats Button</h1>
+      <p>Your button is not currently connected to the internet. Enter in your WiFi login credentials to get started.</p>
+    </hgroup>
+  </header>
+  <main class="container">
+    <h3>WiFi Login</h3>
+    <form id="wifi-form" name="wifi" action="/connect" method="POST">
+      <div class="grid">
+        <input type="text" id="ssid" name="ssid" aria-label="SSID" placeholder="SSID" />
+        <input type="password" id="password" name="password" aria-label="Password" placeholder="Password" />
+        <button type="submit" class="btn btn-primary">Connect</button>
+      </div>
+    </form>
+  </main>
+</body>
+</html>
