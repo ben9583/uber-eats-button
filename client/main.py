@@ -234,7 +234,7 @@ def sta_mode() -> None:
       print("Button Pressed")
       led_pin.value(1)
       try:
-        requests.put('http://192.168.1.14:3000/order', headers={'Authorization': 'Bearer ' + jwt_gen.encode({
+        requests.put('http://ec2-54-202-136-67.us-west-2.compute.amazonaws.com/order', headers={'Authorization': 'Bearer ' + jwt_gen.encode({
           "sub": "random-order",
           "iss": "uber-eats-client.ben9583.com",
           "aud": "uber-eats-server.ben9583.com",
