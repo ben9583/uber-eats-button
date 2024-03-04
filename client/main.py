@@ -160,7 +160,7 @@ def ap_mode() -> None:
         success = post_connect(request)
         if success:
           conn.write(connect_page(request))
-          time.sleep(2)
+          time.sleep(1)
           conn.close()
           s.close()
           break
@@ -175,8 +175,8 @@ def ap_mode() -> None:
       s.close()
       raise e
 
-button_pin = machine.Pin(13, machine.Pin.IN, machine.Pin.PULL_UP)
-led_pin = machine.Pin(15, machine.Pin.OUT)
+button_pin = machine.Pin(16, machine.Pin.IN, machine.Pin.PULL_UP)
+led_pin = machine.Pin(21, machine.Pin.OUT)
 def sta_mode() -> None:
   num_tries = 0
   debounce = True
@@ -222,7 +222,7 @@ def sta_mode() -> None:
           "iss": "uber-eats-client.ben9583.com",
           "aud": "uber-eats-server.ben9583.com",
           "jti": uuid4().hex,
-          "iat": time.time() * 1000,
+          "iat": (time.time() - 10) * 1000,
           "exp": (time.time() + 60) * 1000
         })})
       except BaseException as e:

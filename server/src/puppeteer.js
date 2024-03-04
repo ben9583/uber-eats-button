@@ -252,13 +252,15 @@ const loadUberEatsSession = async (browser, orderId) => {
   statuses.get(orderId).data.credentials.enteringTwoFactor = true;
 };
 
+const MAX_TRIES = 5
+
 /**
  * Create an Uber Eats order. Code will be 201 if the order was created successfully, 4xx if the request was invalid, and 5xx if there was an internal server error.
  * @param {string} orderId The ID of the order
  * @param {(success: boolean) => void} callback A callback function to be called when processing is complete, with a boolean indicating success
  * @returns {Promise<{code: number, body: string}>} A promise that resolves to an object with a code and a body
  */
-const createUberEatsOrder = async (orderId, callback) => {
+const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
   try {
     statuses.set(orderId, {
       status: 200,
@@ -275,6 +277,58 @@ const createUberEatsOrder = async (orderId, callback) => {
 
     const page = await browser.newPage();
     await page.goto("https://www.ubereats.com/", { waitUntil: "networkidle2" });
+    await new Promise((res) => setTimeout(res, 3000));
+
+    console.log("[A] Clearing any carts")
+    await page.$eval('html', (_) => {
+      fetch("https://www.ubereats.com/_p/api/getDraftOrdersByEaterUuidV1", {
+        "credentials": "include",
+        "headers": {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+          "Accept": "*/*",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Content-Type": "application/json",
+          "x-uber-client-gitref": "08f5b0e0cafe4913fbe961d81458c65199daa913",
+          "x-csrf-token": "x",
+          "Alt-Used": "www.ubereats.com",
+          "Sec-Fetch-Dest": "empty",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Site": "same-origin",
+          "Sec-GPC": "1",
+          "Pragma": "no-cache",
+          "Cache-Control": "no-cache"
+        },
+        "referrer": "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
+        "body": "{\"inNoGetDraftOrdersCookie\":true,\"currencyCode\":\"USD\"}",
+        "method": "POST",
+        "mode": "cors"
+      }).then((res) => res.json()).then((data) => {
+        data.data.cartsView.carts.forEach((order) => {
+          fetch("https://www.ubereats.com/_p/api/discardDraftOrdersV1", {
+            "credentials": "include",
+            "headers": {
+              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+              "Accept": "*/*",
+              "Accept-Language": "en-US,en;q=0.5",
+              "Content-Type": "application/json",
+              "x-uber-client-gitref": "08f5b0e0cafe4913fbe961d81458c65199daa913",
+              "x-csrf-token": "x",
+              "Alt-Used": "www.ubereats.com",
+              "Sec-Fetch-Dest": "empty",
+              "Sec-Fetch-Mode": "cors",
+              "Sec-Fetch-Site": "same-origin",
+              "Sec-GPC": "1",
+              "Pragma": "no-cache",
+              "Cache-Control": "no-cache"
+            },
+            "referrer": "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
+            "body": `{\"draftOrderUUIDs\":[\"${order.draftOrderUUID}\"]}`,
+            "method": "POST",
+            "mode": "cors"
+          });
+        });
+      });
+    });
     await new Promise((res) => setTimeout(res, 3000));
 
     const category = weighted_random(
@@ -387,6 +441,11 @@ const createUberEatsOrder = async (orderId, callback) => {
     console.info("[A] Querying OpenAI");
     const selectedItems = await selectItems(restaurantName, uniqueItems);
 
+    if(selectedItems.length === 0) {
+      createUberEatsOrder(orderId, callback);
+      return;
+    }
+
     statuses.get(orderId).data.menuItems = selectedItems.map((item) => ({
       name: item.name,
       image: item.image,
@@ -424,8 +483,16 @@ const createUberEatsOrder = async (orderId, callback) => {
 
     await page.goto("https://www.ubereats.com/checkout"); // networkidle2 doesn't work here; perpetually loading
     console.info("[A] Navigated to checkout");
-    await new Promise((res) => setTimeout(res, 3000));
+    await new Promise((res) => setTimeout(res, 10000));
     await page.screenshot({ path: "out3.png" });
+
+    await page.mouse.click(200, 20);
+
+    // await page
+    //   .waitForSelector('div[data-test="place-order-btn"] button')
+    //   .then((elem) => elem.click());
+    
+    await new Promise((res) => setTimeout(res, 10000));
 
     await browser.close();
 
@@ -436,6 +503,11 @@ const createUberEatsOrder = async (orderId, callback) => {
     callback(true);
   } catch (error) {
     console.error(error);
+
+    if(fallback < MAX_TRIES) {
+      createUberEatsOrder(orderId, callback, fallback + 1);
+      return;
+    }
 
     statuses.get(orderId).status = 500;
     statuses.get(orderId).message = "Internal server error";

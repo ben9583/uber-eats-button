@@ -6,7 +6,8 @@ import struct
 from machine import Pin, RTC
 
 NTP_DELTA = 2208988800
-host = "23.150.40.242"
+# host = "23.150.40.242"
+host = "69.89.207.199"
 
 led = Pin("LED", Pin.OUT)
 
