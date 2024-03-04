@@ -42,6 +42,9 @@ const randomCategories = [
   { name: "Caribbean", weight: 30 },
 ];
 
+
+// const randomCategories = [{ name: "Pizza", weight: 100 }];
+
 /**
  * Scrolls to the bottom of the page
  * @param {p.Page} page The puppeteer page
@@ -484,15 +487,16 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     await page.goto("https://www.ubereats.com/checkout"); // networkidle2 doesn't work here; perpetually loading
     console.info("[A] Navigated to checkout");
     await new Promise((res) => setTimeout(res, 10000));
-    await page.screenshot({ path: "out3.png" });
 
     await page.mouse.click(200, 20);
+    await new Promise((res) => setTimeout(res, 5000));
 
-    // await page
-    //   .waitForSelector('div[data-test="place-order-btn"] button')
-    //   .then((elem) => elem.click());
-    
-    await new Promise((res) => setTimeout(res, 10000));
+    await page
+      .waitForSelector('div[data-test="place-order-btn"] button')
+      .then((elem) => elem.click());
+
+    await new Promise((res) => setTimeout(res, 30000));
+    await page.screenshot({ path: "out3.png" });
 
     await browser.close();
 
