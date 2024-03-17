@@ -1,4 +1,3 @@
-import network
 import socket
 import time
 import struct
@@ -7,7 +6,7 @@ from machine import Pin, RTC
 
 NTP_DELTA = 2208988800
 # host = "23.150.40.242"
-host = "69.89.207.199"
+host = "pool.ntp.org"
 
 led = Pin("LED", Pin.OUT)
 
@@ -17,6 +16,7 @@ def set_time():
   addr = socket.getaddrinfo(host, 123)[0][-1]
   print(addr)
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  i = 0
   while True:
     try:
       s.settimeout(1)
@@ -28,6 +28,10 @@ def set_time():
       if e.args[0] == 110:
         time.sleep(2)
         print("Retrying NTP request")
+        if i > 10:
+          print("Failed to get NTP time")
+          return
+        i += 1
   val = struct.unpack("!I", msg[40:44])[0]
   t = val - NTP_DELTA    
   tm = time.gmtime(t)
