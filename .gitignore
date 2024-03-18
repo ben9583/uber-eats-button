@@ -2,4 +2,5 @@
 **/package-lock.json
 .env
 **/creds/**
+**/out/**
 client/*.txt

@@ -491,6 +491,11 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     await page.mouse.click(200, 20);
     await new Promise((res) => setTimeout(res, 5000));
 
+    const price = await page.$$eval('hr', (elems) => {
+      const priceElem = elems[elems.length - 1].nextElementSibling;
+      return parseFloat(priceElem.textContent.split('$')[1]);
+    });
+
     await page
       .waitForSelector('div[data-test="place-order-btn"] button')
       .then((elem) => elem.click());
@@ -504,6 +509,16 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     statuses.get(orderId).status = 201;
     statuses.get(orderId).message = "Created";
     statuses.get(orderId).end = new Date().toISOString();
+
+    try {
+      fs.mkdirSync("out");
+    } catch (e) {}
+
+    if(!fs.existsSync(`out/orders.csv`)) {
+      fs.writeFileSync(`out/orders.csv`, "time,restaurant,category,items,price\n");
+    }
+
+    fs.appendFileSync('out/orders.csv', `${new Date().toISOString()},${restaurantName},${category},${selectedItems.map(item => item.name).join(';')},${price}\n`);
     callback(true);
   } catch (error) {
     console.error(error);
