@@ -445,6 +445,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     const selectedItems = await selectItems(restaurantName, uniqueItems);
 
     if(selectedItems.length === 0) {
+      console.log("No items selected, retrying")
       createUberEatsOrder(orderId, callback);
       return;
     }
@@ -495,6 +496,12 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
       const priceElem = elems[elems.length - 1].nextElementSibling;
       return parseFloat(priceElem.textContent.split('$')[1]);
     });
+
+    if(price < 20 || price > 80) {
+      console.log("Price out of range, retrying")
+      createUberEatsOrder(orderId, callback);
+      return;
+    }
 
     await page
       .waitForSelector('div[data-test="place-order-btn"] button')
