@@ -7,7 +7,7 @@ const prompt =
 /**
  * Uses OpenAI's GPT to select items out of the list that form a meal
  * @param {string} restaurant The name of the restaurant
- * @param {{name: string, price: string, element: HTMLElement | null, information: string | undefined}} items Items to be selected from
+ * @param {{name: string, price: string, element: HTMLElement | null, information: string | undefined}[]} items Items to be selected from
  * @returns {{name: string, price: string, element: HTMLElement | null, information: string | undefined}[]} The selected items
  */
 const selectItems = async (restaurant, items) => {
@@ -41,10 +41,12 @@ const selectItems = async (restaurant, items) => {
   const selectedItems = response.split("\n").map((item) => item.trim());
   const uniqueItems = [];
   const seenItems = new Set();
-  for (const item of items) {
-    if (selectedItems.includes(item.name) && !seenItems.has(item.name)) {
-      seenItems.add(item.name);
-      uniqueItems.push(item);
+  for (const selectedItem of selectedItems) {
+    for(const item of items) {
+      if(item.name.includes(selectedItem) && !seenItems.has(item.name)) {
+        seenItems.add(item.name);
+        uniqueItems.push(item);
+      }
     }
   }
 
