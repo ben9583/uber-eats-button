@@ -489,7 +489,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     console.info("[A] Navigated to checkout");
     await new Promise((res) => setTimeout(res, 10000));
 
-    await page.mouse.click(200, 20);
+    await page.mouse.click(10, 100);
     await new Promise((res) => setTimeout(res, 5000));
 
     const price = await page.$$eval('hr', (elems) => {
