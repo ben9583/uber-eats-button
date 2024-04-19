@@ -41,12 +41,10 @@ const selectItems = async (restaurant, items) => {
   const selectedItems = response.split("\n").map((item) => item.trim());
   const uniqueItems = [];
   const seenItems = new Set();
-  for (const selectedItem of selectedItems) {
-    for(const item of items) {
-      if(item.name.includes(selectedItem) && !seenItems.has(item.name)) {
-        seenItems.add(item.name);
-        uniqueItems.push(item);
-      }
+  for (const item of items) {
+    if (selectedItems.includes(item.name) && !seenItems.has(item.name)) {
+      seenItems.add(item.name);
+      uniqueItems.push(item);
     }
   }
 
