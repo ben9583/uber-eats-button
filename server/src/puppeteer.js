@@ -8,6 +8,7 @@ puppeteer.use(StealthPlugin());
 
 const { selectItems } = require("./openai");
 const { risk_distribution, weighted_random } = require("./utils");
+const { sendSMSMessage } = require("./pinpoint");
 
 /** @typedef {{ enteringEmail: boolean, gettingTwoFactor: boolean, enteringTwoFactor: boolean }} CredentialsStatus */
 /** @typedef {{ name: string, image: string }} Category */
@@ -271,6 +272,10 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
       data: { credentials: false, addingItems: false, ordered: false },
       start: new Date().toISOString(),
     });
+
+    sendSMSMessage('The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed.')
+      .catch(reason => console.warn("SMS message failed to send: " + reason))
+
     const browser = await puppeteer.launch({
       headless: "new",
       executablePath: p.executablePath(),
