@@ -87,7 +87,7 @@ const orderHandler = (req, res) => {
     uber_eats_puppeteer.getUberEatsOrderStatus(mostRecentOrder)?.status === 200
   ) {
     res.status(409).send("Conflict");
-    reutrn;
+    return;
   }
 
   mostRecentOrder = token.jti;
