@@ -21,10 +21,6 @@ class UberEatsSendTextMessageCommand extends SendTextMessageCommand {
   }
 }
 
-const sendText = new UberEatsSendTextMessageCommand({
-  MessageBody: 'This is a test message!',
-})
-
 /**
  * Calls the AWS Pinpoint SMS Voice V2 API to send a message to the
  * configured phone number.
