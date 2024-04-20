@@ -43,7 +43,6 @@ const randomCategories = [
   { name: "Caribbean", weight: 30 },
 ];
 
-
 // const randomCategories = [{ name: "Pizza", weight: 100 }];
 
 /**
@@ -256,7 +255,7 @@ const loadUberEatsSession = async (browser, orderId) => {
   statuses.get(orderId).data.credentials.enteringTwoFactor = true;
 };
 
-const MAX_TRIES = 5
+const MAX_TRIES = 5;
 
 /**
  * Create an Uber Eats order. Code will be 201 if the order was created successfully, 4xx if the request was invalid, and 5xx if there was an internal server error.
@@ -273,8 +272,9 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
       start: new Date().toISOString(),
     });
 
-    sendSMSMessage('The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed.')
-      .catch(reason => console.warn("SMS message failed to send: " + reason))
+    sendSMSMessage(
+      "The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed."
+    ).catch((reason) => console.warn("SMS message failed to send: " + reason));
 
     const browser = await puppeteer.launch({
       headless: "new",
@@ -287,13 +287,14 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     await page.goto("https://www.ubereats.com/", { waitUntil: "networkidle2" });
     await new Promise((res) => setTimeout(res, 3000));
 
-    console.log("[A] Clearing any carts")
-    await page.$eval('html', (_) => {
+    console.log("[A] Clearing any carts");
+    await page.$eval("html", (_) => {
       fetch("https://www.ubereats.com/_p/api/getDraftOrdersByEaterUuidV1", {
-        "credentials": "include",
-        "headers": {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
-          "Accept": "*/*",
+        credentials: "include",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+          Accept: "*/*",
           "Accept-Language": "en-US,en;q=0.5",
           "Content-Type": "application/json",
           "x-uber-client-gitref": "08f5b0e0cafe4913fbe961d81458c65199daa913",
@@ -303,39 +304,45 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
           "Sec-Fetch-Mode": "cors",
           "Sec-Fetch-Site": "same-origin",
           "Sec-GPC": "1",
-          "Pragma": "no-cache",
-          "Cache-Control": "no-cache"
+          Pragma: "no-cache",
+          "Cache-Control": "no-cache",
         },
-        "referrer": "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
-        "body": "{\"inNoGetDraftOrdersCookie\":true,\"currencyCode\":\"USD\"}",
-        "method": "POST",
-        "mode": "cors"
-      }).then((res) => res.json()).then((data) => {
-        data.data.cartsView.carts.forEach((order) => {
-          fetch("https://www.ubereats.com/_p/api/discardDraftOrdersV1", {
-            "credentials": "include",
-            "headers": {
-              "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
-              "Accept": "*/*",
-              "Accept-Language": "en-US,en;q=0.5",
-              "Content-Type": "application/json",
-              "x-uber-client-gitref": "08f5b0e0cafe4913fbe961d81458c65199daa913",
-              "x-csrf-token": "x",
-              "Alt-Used": "www.ubereats.com",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "Sec-GPC": "1",
-              "Pragma": "no-cache",
-              "Cache-Control": "no-cache"
-            },
-            "referrer": "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
-            "body": `{\"draftOrderUUIDs\":[\"${order.draftOrderUUID}\"]}`,
-            "method": "POST",
-            "mode": "cors"
+        referrer:
+          "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
+        body: '{"inNoGetDraftOrdersCookie":true,"currencyCode":"USD"}',
+        method: "POST",
+        mode: "cors",
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          data.data.cartsView.carts.forEach((order) => {
+            fetch("https://www.ubereats.com/_p/api/discardDraftOrdersV1", {
+              credentials: "include",
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:124.0) Gecko/20100101 Firefox/124.0",
+                Accept: "*/*",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Content-Type": "application/json",
+                "x-uber-client-gitref":
+                  "08f5b0e0cafe4913fbe961d81458c65199daa913",
+                "x-csrf-token": "x",
+                "Alt-Used": "www.ubereats.com",
+                "Sec-Fetch-Dest": "empty",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-GPC": "1",
+                Pragma: "no-cache",
+                "Cache-Control": "no-cache",
+              },
+              referrer:
+                "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
+              body: `{\"draftOrderUUIDs\":[\"${order.draftOrderUUID}\"]}`,
+              method: "POST",
+              mode: "cors",
+            });
           });
         });
-      });
     });
     await new Promise((res) => setTimeout(res, 3000));
 
@@ -344,9 +351,14 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
       randomCategories.map((cat) => cat.weight)
     );
     console.log("Category: " + category);
-    await page.goto(page.url() + "&sf=JTVCJTdCJTIydXVpZCUyMiUzQSUyMmIxOWM4OTc4LTIwM2MtNGE4OS1hMjNlLWU0ODQyZmViZTRmZiUyMiUyQyUyMm9wdGlvbnMlMjIlM0ElNUIlN0IlMjJ1dWlkJTIyJTNBJTIyMmM3Y2Y3ZWYtNzMwZi00MzFmLTkwNzItMjZiYzM5ZjdjMDQyJTIyJTdEJTVEJTdEJTVE&scq=" + encodeURIComponent(category), {
-      waitUntil: "networkidle2",
-    });
+    await page.goto(
+      page.url() +
+        "&sf=JTVCJTdCJTIydXVpZCUyMiUzQSUyMmIxOWM4OTc4LTIwM2MtNGE4OS1hMjNlLWU0ODQyZmViZTRmZiUyMiUyQyUyMm9wdGlvbnMlMjIlM0ElNUIlN0IlMjJ1dWlkJTIyJTNBJTIyMmM3Y2Y3ZWYtNzMwZi00MzFmLTkwNzItMjZiYzM5ZjdjMDQyJTIyJTdEJTVEJTdEJTVE&scq=" +
+        encodeURIComponent(category),
+      {
+        waitUntil: "networkidle2",
+      }
+    );
     console.info("[A] Navigated to category");
     await new Promise((res) => setTimeout(res, 3000));
     await page.screenshot({ path: "out3.png" });
@@ -449,8 +461,8 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     console.info("[A] Querying OpenAI");
     const selectedItems = await selectItems(restaurantName, uniqueItems);
 
-    if(selectedItems.length === 0) {
-      console.log("No items selected, retrying")
+    if (selectedItems.length === 0) {
+      console.log("No items selected, retrying");
       createUberEatsOrder(orderId, callback);
       return;
     }
@@ -497,13 +509,13 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     await page.mouse.click(10, 100);
     await new Promise((res) => setTimeout(res, 5000));
 
-    const price = await page.$$eval('hr', (elems) => {
+    const price = await page.$$eval("hr", (elems) => {
       const priceElem = elems[elems.length - 1].nextElementSibling;
-      return parseFloat(priceElem.textContent.split('$')[1]);
+      return parseFloat(priceElem.textContent.split("$")[1]);
     });
 
-    if(price < 20 || price > 80) {
-      console.log("Price out of range, retrying")
+    if (price < 20 || price > 80) {
+      console.log("Price out of range, retrying");
       createUberEatsOrder(orderId, callback);
       return;
     }
@@ -514,6 +526,17 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
 
     await new Promise((res) => setTimeout(res, 30000));
     await page.screenshot({ path: "out3.png" });
+
+    const estimatedArrival = await page
+      .waitForSelector('div[data-testid="active-order-sticky-eta"]')
+      .then((elem) => elem.evaluate((elem) => elem.textContent));
+
+    const splits = estimatedArrival.split(" ");
+    const time = splits[splits.length - 2] + " " + splits[splits.length - 1];
+
+    sendSMSMessage(
+      "Your order has been placed and is estimated to arrive at " + time + "."
+    ).catch((reason) => console.warn("SMS message failed to send: " + reason));
 
     await browser.close();
 
@@ -526,19 +549,33 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
       fs.mkdirSync("out");
     } catch (e) {}
 
-    if(!fs.existsSync(`out/orders.csv`)) {
-      fs.writeFileSync(`out/orders.csv`, "time,restaurant,category,items,price\n");
+    if (!fs.existsSync(`out/orders.csv`)) {
+      fs.writeFileSync(
+        `out/orders.csv`,
+        "time,restaurant,category,items,price\n"
+      );
     }
 
-    fs.appendFileSync('out/orders.csv', `${new Date().toISOString()},${restaurantName},${category},${selectedItems.map(item => item.name).join(';')},${price}\n`);
+    fs.appendFileSync(
+      "out/orders.csv",
+      `${new Date().toISOString()},${restaurantName},${category},${selectedItems
+        .map((item) => item.name)
+        .join(";")},${price}\n`
+    );
     callback(true);
   } catch (error) {
     console.error(error);
 
-    if(fallback < MAX_TRIES) {
+    if (fallback < MAX_TRIES) {
       createUberEatsOrder(orderId, callback, fallback + 1);
       return;
     }
+
+    sendSMSMessage(
+      "An order failed to place " +
+        fallback +
+        " times. Please check the logs for more information."
+    ).catch((reason) => console.warn("SMS message failed to send: " + reason));
 
     statuses.get(orderId).status = 500;
     statuses.get(orderId).message = "Internal server error";
