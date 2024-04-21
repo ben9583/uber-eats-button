@@ -90,7 +90,7 @@ The list is split and matched with the menu items, which are sequentially added 
 The page then navigates to the checkout and the order is placed including tip and applying any available promos. The restaurant, category, order, and total price are saved and appended to a csv. Another SMS message is sent to the same number confirming the order and the expected arrival time from the value displayed on the website.
 
 ![Uber Eats Order has Arrived](./.github/images/arrival.jpeg)
-*This is You when your Food Arrives*
+*The First Successful Use of the Uber Eats Button*
 
 If any errors occur during the order being placed, or if the order falls outside of the acceptable price range, or if ChatGPT gives items not present on the menu (sometimes happens if the menu is in two languages), the whole process is restarted from the browser being closed and reloaded. If enough errors occur, the program stops and the phone number is texted notifying of the error.
 
