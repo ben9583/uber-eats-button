@@ -122,6 +122,11 @@ TWOFACTOR_EMAIL='' # Login email for Roundcubemail
 TWOFACTOR_PASSWORD='' # Login password for Roundcubmail
 OPENAI_API_KEY='sk-blahblahblah' # OpenAI API Key
 OPENAI_ORGANIZATION='org-blahblahblah' # OpenAI Organization
+AWS_ACCESS_KEY_ID='' # AWS Access Key ID
+AWS_SECRET_ACCESS_KEY='' # AWS Secret Access Key
+AWS_REGION='' # AWS Region
+AWS_DESTINATION_PHONE_NUMBER='' # Phone number that text messages will be sent to
+AWS_ORIGINATION_POOL_ID='' # Amazon Pinpoint Origination Pool ID (that messages will be sent from)
 ```
 
 ### Server
