@@ -308,7 +308,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
           "Cache-Control": "no-cache",
         },
         referrer:
-          "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
+          "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" + process.env.UBER_EATS_ADDRESS_ENCODED,
         body: '{"inNoGetDraftOrdersCookie":true,"currencyCode":"USD"}',
         method: "POST",
         mode: "cors",
@@ -336,7 +336,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
                 "Cache-Control": "no-cache",
               },
               referrer:
-                "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=sensitive-information-redacted",
+                "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" + process.env.UBER_EATS_ADDRESS_ENCODED,
               body: `{\"draftOrderUUIDs\":[\"${order.draftOrderUUID}\"]}`,
               method: "POST",
               mode: "cors",
@@ -353,7 +353,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     console.log("Category: " + category);
     await page.goto(
       page.url() +
-        "&sf=JTVCJTdCJTIydXVpZCUyMiUzQSUyMmIxOWM4OTc4LTIwM2MtNGE4OS1hMjNlLWU0ODQyZmViZTRmZiUyMiUyQyUyMm9wdGlvbnMlMjIlM0ElNUIlN0IlMjJ1dWlkJTIyJTNBJTIyMmM3Y2Y3ZWYtNzMwZi00MzFmLTkwNzItMjZiYzM5ZjdjMDQyJTIyJTdEJTVEJTdEJTVE&scq=" +
+        "&sf=JTVCJTdCJTIydXVpZCUyMiUzQSUyMmIxOWM4OTc4LTIwM2MtNGE4OS1hMjNlLWU0ODQyZmViZTRmZiUyMiUyQyUyMm9wdGlvbnMlMjIlM0ElNUIlN0IlMjJ1dWlkJTIyJTNBJTIyMmM3Y2Y3ZWYtNzMwZi00MzFmLTkwNzItMjZiYzM5ZjdjMDQyJTIyJTdEJTVEJTdEJTVE&scq=" + // specifies only highly rated restaurants
         encodeURIComponent(category),
       {
         waitUntil: "networkidle2",
