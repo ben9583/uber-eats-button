@@ -7,7 +7,7 @@
 
 ## About
 
-The Uber Eats Button is a big red button that uses some AI and randomness to pick out some food items on Uber Eats that constitute a meal and orders it to your house without any human intervention. The button sends a request to a server that interfaces with Uber Eats to pick a restaurant randomly and select items from the menu by asking ChatGPT to create a meal. It then places the order to the address and notifies the user with an SMS message.
+The Uber Eats Button is a big red button that uses AI and randomness to pick out some food items on Uber Eats that constitute a meal and orders it to your house without any human intervention. The button sends a request to a server that interfaces with Uber Eats to pick a restaurant randomly and select items from the menu by asking ChatGPT to create a meal. It then places the order to the address and notifies the user with an SMS message.
 
 ![Inspiration](./.github/images/idea.png)
 *The Moment of Inspiration from Peter Ruette*
@@ -59,9 +59,9 @@ The restaurant is selected using a risk-based random distribution that selected 
 
 The safety term determines how much preference is given to the first restaurants in the list. If safety is high, the first restaurants will have a much higher probability of being selected than later restaurants, which reflects that the first restaurants are those recommended more. If safety is 0, the above function is undefined but converges to `1/n`, a uniform distribution, reflecting completely random selection. 
 
-This probability distribution function satisfies the requirement that it sums to 1 over all x:
+This probability density function satisfies the requirement that it sums to 1 over all x:
 
-![Rule of Probability Distribution Functions](./.github/images/pdf-rule.png)
+![Rule of Probability Density Functions](./.github/images/pdf-rule.png)
 *The sum of the pdf over all possible values is 1 for any safety value*
 
 Once a restaurant is selected, the browser instance loads the entire menu and parses the items by name, price, and description. It compiles these into a list and makes an OpenAI API request to get a GPT-4 response to the following prompt:
