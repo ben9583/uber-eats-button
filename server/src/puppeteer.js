@@ -264,18 +264,18 @@ const MAX_TRIES = 5;
  * @returns {Promise<{code: number, body: string}>} A promise that resolves to an object with a code and a body
  */
 const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
+  statuses.set(orderId, {
+    status: 200,
+    message: "Processing",
+    data: { credentials: false, addingItems: false, ordered: false },
+    start: new Date().toISOString(),
+  });
+
+  sendSMSMessage(
+    "The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed."
+  ).catch((reason) => console.warn("SMS message failed to send: " + reason));
+
   try {
-    statuses.set(orderId, {
-      status: 200,
-      message: "Processing",
-      data: { credentials: false, addingItems: false, ordered: false },
-      start: new Date().toISOString(),
-    });
-
-    sendSMSMessage(
-      "The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed."
-    ).catch((reason) => console.warn("SMS message failed to send: " + reason));
-
     const browser = await puppeteer.launch({
       headless: "new",
       executablePath: p.executablePath(),
@@ -308,7 +308,8 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
           "Cache-Control": "no-cache",
         },
         referrer:
-          "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" + process.env.UBER_EATS_ADDRESS_ENCODED,
+          "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" +
+          process.env.UBER_EATS_ADDRESS_ENCODED,
         body: '{"inNoGetDraftOrdersCookie":true,"currencyCode":"USD"}',
         method: "POST",
         mode: "cors",
@@ -336,7 +337,8 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
                 "Cache-Control": "no-cache",
               },
               referrer:
-                "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" + process.env.UBER_EATS_ADDRESS_ENCODED,
+                "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" +
+                process.env.UBER_EATS_ADDRESS_ENCODED,
               body: `{\"draftOrderUUIDs\":[\"${order.draftOrderUUID}\"]}`,
               method: "POST",
               mode: "cors",
