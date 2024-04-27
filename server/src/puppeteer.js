@@ -288,7 +288,9 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     await new Promise((res) => setTimeout(res, 3000));
 
     console.log("[A] Clearing any carts");
-    await page.$eval("html", (_) => {
+
+    const address = process.env.UBER_EATS_ADDRESS_ENCODED;
+    await page.$eval("html", (address) => {
       fetch("https://www.ubereats.com/_p/api/getDraftOrdersByEaterUuidV1", {
         credentials: "include",
         headers: {
@@ -309,7 +311,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
         },
         referrer:
           "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" +
-          process.env.UBER_EATS_ADDRESS_ENCODED,
+          address,
         body: '{"inNoGetDraftOrdersCookie":true,"currencyCode":"USD"}',
         method: "POST",
         mode: "cors",
@@ -338,14 +340,14 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
               },
               referrer:
                 "https://www.ubereats.com/feed?diningMode=DELIVERY&pl=" +
-                process.env.UBER_EATS_ADDRESS_ENCODED,
+                address,
               body: `{\"draftOrderUUIDs\":[\"${order.draftOrderUUID}\"]}`,
               method: "POST",
               mode: "cors",
             });
           });
         });
-    });
+    }, address);
     await new Promise((res) => setTimeout(res, 3000));
 
     const category = weighted_random(
