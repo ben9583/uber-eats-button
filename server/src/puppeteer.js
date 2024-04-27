@@ -271,7 +271,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     start: new Date().toISOString(),
   });
 
-  sendSMSMessage(
+  if(fallback === 0) sendSMSMessage(
     "The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed."
   ).catch((reason) => console.warn("SMS message failed to send: " + reason));
 
