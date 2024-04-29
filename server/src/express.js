@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const uber_eats_puppeteer = require("./puppeteer");
+const { sendSMSMessage } = require("./pinpoint");
 
 const idempotentKeys = new Set();
 let mostRecentOrder = undefined;
@@ -92,6 +93,11 @@ const orderHandler = (req, res) => {
 
   mostRecentOrder = token.jti;
   res.status(202).send("Accepted");
+
+  sendSMSMessage(
+    "The Uber Eats Button has been pressed and the order is being created. A confirmation message will be sent when the order has been placed."
+  ).catch((reason) => console.warn("SMS message failed to send: " + reason));
+
   uber_eats_puppeteer.createUberEatsOrder(token.jti, () => {});
 };
 
