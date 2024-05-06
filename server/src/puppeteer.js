@@ -507,17 +507,23 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     await new Promise((res) => setTimeout(res, 10000));
 
     await page.mouse.click(10, 100);
-    await new Promise((res) => setTimeout(res, 5000));
+    await new Promise((res) => setTimeout(res, 10000));
 
-    const price = await page.$$eval("hr", (elems) => {
-      const priceElem = elems[elems.length - 1].nextElementSibling;
-      return parseFloat(priceElem.textContent.split("$")[1]);
-    });
+    let price = 30;
 
-    if (price < 20 || price > 80) {
-      console.log("Price out of range, retrying");
-      createUberEatsOrder(orderId, callback);
-      return;
+    try {
+      price = await page.$$eval("hr", (elems) => {
+        const priceElem = elems[elems.length - 1].nextElementSibling;
+        return parseFloat(priceElem.textContent.split("$")[1]);
+      });
+
+      if (price < 20 || price > 80) {
+        console.log("Price out of range, retrying");
+        createUberEatsOrder(orderId, callback);
+        return;
+      }
+    } catch (error) {
+      console.warn("Failed to get price, defaulting to $30");
     }
 
     await page
