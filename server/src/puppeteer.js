@@ -513,7 +513,8 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
 
     try {
       price = await page.$$eval("hr", (elems) => {
-        const priceElem = elems[elems.length - 1].nextElementSibling;
+        let priceElem = elems[elems.length - 1].nextElementSibling;
+        if(priceElem === null) priceElem = elems[elems.length - 1].parentElement.nextElementSibling;
         return parseFloat(priceElem.textContent.split("$")[1]);
       });
 
@@ -527,7 +528,7 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
     }
 
     await page
-      .waitForSelector('div[data-test="place-order-btn"] button')
+      .waitForSelector('div[data-test="place-order-btn"] button, button[data-test="place-order-btn"]')
       .then((elem) => elem.click());
 
     await new Promise((res) => setTimeout(res, 30000));
