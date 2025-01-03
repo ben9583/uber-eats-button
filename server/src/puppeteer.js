@@ -211,19 +211,19 @@ const loadUberEatsSession = async (browser, orderId) => {
   await page.waitForSelector("input#EMAIL_OTP_CODE-0");
   console.info("[A] Found 2FA input");
   await page.type("input#EMAIL_OTP_CODE-0", code.substring(0, 1), {
-    delay: 100,
+    delay: 200,
   });
   await page.type("input#EMAIL_OTP_CODE-1", code.substring(1, 2), {
-    delay: 120,
+    delay: 242,
   });
   await page.type("input#EMAIL_OTP_CODE-2", code.substring(2, 3), {
-    delay: 84,
+    delay: 194,
   });
   await page.type("input#EMAIL_OTP_CODE-3", code.substring(3, 4), {
-    delay: 130,
+    delay: 264,
   });
   console.info("[A] Typed 2FA code");
-  await new Promise((res) => setTimeout(res, 3000));
+  await new Promise((res) => setTimeout(res, 5000));
   await page.screenshot({ path: "out3.png" });
 
   if (!fs.existsSync("creds")) {
@@ -255,7 +255,7 @@ const loadUberEatsSession = async (browser, orderId) => {
   statuses.get(orderId).data.credentials.enteringTwoFactor = true;
 };
 
-const MAX_TRIES = 5;
+const MAX_TRIES = 10;
 
 /**
  * Create an Uber Eats order. Code will be 201 if the order was created successfully, 4xx if the request was invalid, and 5xx if there was an internal server error.
@@ -405,8 +405,8 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
           const correctElem =
             elem.parentElement.parentElement.parentElement.parentElement;
           const text = correctElem.innerText;
-          let textItems = text.split("\n");
-          const elemUuid = correctElem.parentElement.getAttribute("data-test");
+          let textItems = text.split("\n").filter((item) => item.trim() !== "");
+          const elemUuid = correctElem.parentElement.parentElement.getAttribute("data-testid");
           if (elemUuid === null) return;
           if (textItems.length === 2) {
             return {
@@ -424,6 +424,17 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
               ) == ")"
             )
               textItems = textItems.slice(0, textItems.length - 1);
+            
+            if (
+              textItems.length > 3 && textItems[2] === " • "
+            )
+              if (
+                textItems.length > 4
+              )
+                textItems = textItems.slice(0, 2).concat(textItems.slice(4));
+              else
+                textItems = textItems.slice(0, 2);
+  
             return textItems.length > 2
               ? {
                   name: textItems[0].trim(),
@@ -476,8 +487,9 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
 
     for (const item of selectedItems) {
       console.info(`[A] Adding ${item.name} to cart`);
+      await autoScroll(page);
       await page
-        .waitForSelector(`li[data-test="${item.elementId}"] a`)
+        .waitForSelector(`[data-testid="${item.elementId}"]`)
         .then((elem) => elem.click());
       await new Promise((res) => setTimeout(res, 2000));
       await page.$$eval(
