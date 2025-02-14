@@ -83,9 +83,9 @@ const loadUberEatsSession = async (browser, orderId) => {
   if (ubereatsCreds && authCreds) {
     console.info("[A] Loading credentials");
     const page = await browser.newPage();
-    await page.goto("https://www.ubereats.com/", { waitUntil: "networkidle2" });
+    await page.goto("https://www.ubereats.com/", { waitUntil: "load" });
     await page.setCookie(...ubereatsCreds);
-    await page.goto("https://auth.uber.com", { waitUntil: "networkidle2" });
+    await page.goto("https://auth.uber.com", { waitUntil: "load" });
     await page.setCookie(...authCreds);
 
     console.info("[A] Verifying credentials");
@@ -539,9 +539,10 @@ const createUberEatsOrder = async (orderId, callback, fallback = 0) => {
       console.warn("Failed to get price, defaulting to $30");
     }
 
-    await page
-      .waitForSelector('div[data-test="place-order-btn"] button, button[data-test="place-order-btn"]')
-      .then((elem) => elem.click());
+    const orderButtons = await page.evaluate(() => 
+      Array.from(document.querySelectorAll('div[data-test="place-order-btn"] button, button[data-test="place-order-btn"]'))
+    );
+    orderButtons.at(-1).click();
 
     await new Promise((res) => setTimeout(res, 30000));
     await page.screenshot({ path: "out3.png" });
